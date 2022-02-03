@@ -1,0 +1,409 @@
+Welcome back.
+
+In this lecture, we'll make a small detour and learn the basics of network
+
+communication, which allows our machines to communicate with each other within the
+
+cluster.
+
+We'll start with talking about the TCP IP network model, and later we will walk
+
+through a full example of a message traveling between two machines over the
+
+network.
+
+Even if you feel familiar with this topic, I still recommend using this lecture as a
+
+refresher, as network communication is particularly important in distributed
+
+systems.
+
+So let's start talking about network communication and why it's so important in
+
+multithreading.
+
+Passing a message from one thread to another thread was a very easy task.
+
+Since all our threads ran in a context of the same application, they all had a
+
+shared memory space, or they could pass data to each other.
+
+Of course, we had to do it carefully to avoid race conditions, so we use locks for
+
+protection and semaphores or condition variables for signaling in distributed
+
+systems.
+
+The picture is very different here.
+
+We don't have the shared memory luxury anymore, so the only efficient way for our
+
+nodes to communicate is he using the network.
+
+There is a lot of work that happens behind the scenes go allow our computers to
+
+exchange messages with each other.
+
+All duct work can be described through four layers of obstruction defined in the
+
+TCP IP network model.
+
+In this model, each layer is getting service from the layer underneath it and
+
+it's communicating with the same layer on the other machine or station using their
+
+relevant protocols.
+
+Those protocols are agreements between two points on the network on how to exchange
+
+data.
+
+The higher the obstruction layer, the closer and more relevant it is to us, the
+
+software developers and the users, and the lower the obstruction layer is, the closer
+
+it is to the physical hardware.
+
+The concepts of networking are very similar to those of a postal service as in
+
+the end of the day, both services are there to help us delivering items from a
+
+source to a destination.
+
+The first and the lowest network obstruction layer is the data link layer.
+
+The data link layer is concerned with all the details of interfacing with the
+
+hardware, and he's in charge of the physical delivery of the data between two
+
+points connected by a single link.
+
+Those can be either two different hosts or a host and a router.
+
+This obstruction layer is in charge of encapsulating and encoding our data.
+
+It takes care of the flow, control, the error, that action, error correction, and
+
+many other lower level details.
+
+The most important protocol in the Slayer is the ethernet protocol.
+
+This protocol wraps our data packets into frames and uses the devices, Mac addresses
+
+to deliver those packets from one device to another device.
+
+The data link layer is equivalent to the post office logistics department that they
+
+scare of the post-service planes, trucks, and the postman schedules, and make sure
+
+that the letter moves from one point to another point on its way to its
+
+destination.
+
+The internet layer get service from the data link layer and thinks a higher level
+
+of role.
+
+It is in charge of deliver in the data, potentially across multiple networks, and
+
+then routing the packets from the source computer.
+
+So the destination computer monk protocol that allows to accomplish this is the
+
+internet protocol where each device in the network is a sign, an IP address, and this
+
+address allows the packets to travel across the networks from the source host
+
+to the destination host.
+
+The only thing we really care about in the Slayer is obtaining the IP address of the
+
+computer we want to communicate with and getting our own IP address if we want to
+
+share it with others through the service registry, for example, and the postal
+
+service analogy, we can think of the IP address as the address of the building
+
+where the recipient is located.
+
+Where are you using the building and knowledge in log by accident as the
+
+internet layer only takes care of delivering a packet from one computer to
+
+another, but it doesn't know which application process the packet is intended
+
+for, nor does it know which process sent it and where the response should go to.
+
+For that purpose.
+
+We have the transport layer.
+
+This obstruction layer takes care of delivering the messages and poo en from
+
+the process on one machine to another process on the other machine.
+
+And the transport layer.
+
+Each endpoint or socket identifies itself by 16 bit port.
+
+The listening board is chosen ahead of time by the destination application, but
+
+the source sport is generated on the fly by descender.
+
+Depending on the available ports at the moment, using the port wants, the package
+
+arrives at the destination computer, the operating system knows which process the
+
+packet belongs to.
+
+Carrying on with the postal service analogy, the port number would be, or
+
+exact apartment address and name, which ensures that the package that arrived at
+
+the apartment complex door would end up in your hands instead of your neighbors or
+
+roommates and the transport layer.
+
+There are two primary protocols.
+
+They user datagram protocol and the transmission control protocol.
+
+UDP is a connection, less protocol that guarantees only the best effort, which
+
+means it's unreliable and the messages can be lost, duplicated, or reordered.
+
+The basic building block of the UDP protocol is a unit called data datagram,
+
+which is limited in size.
+
+In the Serbian systems, UDP is not very common, but it is used where the speed and
+
+simplicity of the message delivery is more important than the reliability.
+
+One use case can be sending the bug information to a distributed login
+
+service.
+
+If some log messages get lost, it's generally not a big deal as long as it's
+
+not financial data.
+
+For example, another perfect use case for UDP is a realtime video or audio streaming
+
+service.
+
+For example, if our distributed system is getting a live stream of a game or a show
+
+and he's delivering it to users, it's better to lose a few frames rather than
+
+slowing down the entire stream until that last frame is redelivered.
+
+Also, if our distributed system connects users playing an online game, it's better
+
+to keep the latency as low as possible.
+
+And most past events such as character position, for example, even if laws can be
+
+easily extrapolated from newer events.
+
+UDP also allows for broadcasting, which basically allows a single computer to send
+
+a message to all the computers in the local network without knowing anything
+
+about who those computers are.
+
+This allows for full decoupling between the sender and their receivers.
+
+The second and most common protocol in the transport layer is TCP.
+
+DCP is like the premium mailing service.
+
+It is reliable.
+
+It guarantees that the data is going to be delivered exactly as sent without any
+
+losses, duplications, or reordering.
+
+And unlike UDP, it is based on a connection between exactly two points.
+
+That connection needs to be established before any data can be sent, and in the
+
+end it has to be shut down gracefully once all the data is sent.
+
+Also, contrary to the UDP protocol, the TCP interface works as a stream of bytes
+
+rather than individual data grounds.
+
+Not surprisingly, the TCP protocol is more popular in distributed systems, as in most
+
+cases, they're reliable.
+
+Delivery of data is more important to us, even at a cost of some latency.
+
+Because DCP is based on a connection between exactly two points.
+
+Even if we have two sources that connect to the same destination IP and port, the
+
+data flow will be split into two separate sockets and it will be handled completely
+
+separately by the operating system and the application.
+
+That's because each DCP connection is uniquely identified by the four tupo of
+
+source IP port and destination IP and port.
+
+This feature allows us to build web servers very easily.
+
+We simply need to listen on a single well known port using DCP and every host that
+
+wants to communicate with our web server simply needs to connect to that port.
+
+But since each request comes from a different source IP and port number, it
+
+will create a separate connection and a separate stream of data.
+
+The only problem is TCP works as a plain stream of bytes nor distinguishing which
+
+byte belongs to what message.
+
+However, in our case, we want to send and receive commands, request or messages
+
+between nodes in the cluster and Parsi messages out of a stream of bytes is very
+
+hard.
+
+We need to know where the message starts, where it ends, and how the data is
+
+formatted for that purpose.
+
+We have the final layer, which is the application layer.
+
+This layer is the most important and relevant to us.
+
+The software engineers who build distributed applications that communicate
+
+with each other through the network.
+
+In the application layer, we have many different protocols already defined for us
+
+for different purposes.
+
+For example, the FTP protocol for transmitting files across the web, the
+
+SMTP for sending and receiving emails, DNS for translating host names into IP
+
+addresses, and finally, HTTP, which was initially designed to transmit hypermedia
+
+documents for browsers, but later has been extended to support transmitting video,
+
+audio images, and pretty much any type of message we want to send.
+
+So now that we understand each layer in the TCP IP model, let's walk through a
+
+full example of how a message would travel between two applications on the network.
+
+Let's assume with two nodes, the client and the server, both of them are located
+
+in different networks, which are connected by a router.
+
+First, in the application layer, our application will create a message using
+
+HTTP, which contains the message and the HTTP header.
+
+In the transport layer at DCP, Heather will be added to the message containing
+
+the server port and the client's port.
+
+Typically, at this point, the original message would also be broken into multiple
+
+segments, but since this message is very small, a single TCP segment is enough.
+
+In the next stage, the IP protocol in the internet layer, we'll add a nod or Heather
+
+containing the server IP address as well as the clients.
+
+The sender's IP and port is necessary so that the server will know how to respond
+
+to it in the future.
+
+Finally on the beta link layer.
+
+The ethernet protocol adds that Mac address of the router in its network is
+
+that of that of the client.
+
+All of those layers together are now for me, a frame.
+
+This entire frame is then sent through the network in a form of individual bits until
+
+what they arrives at the router.
+
+When the router receives the message, it removes the ethernet protocol.
+
+Header, looks at the destination IP address, and using a routing table, it
+
+figures out which network this message needs to be sent next.
+
+So it would arrive at the destination server.
+
+Then the router adds a new Ethan and header of the server Mac address as the
+
+destination and the routers Mac address as the source.
+
+After that, it sends the frame over the link straight to the server.
+
+When the frame finally arrives at the server, all those layers are peeled off
+
+like an onion first, the Ethan had had her is removed and the server validates that
+
+this packet actually belongs to this particular server.
+
+Next, the IP header is removed and saving the source IP address in memory so that
+
+the server can use it.
+
+The respond to the client.
+
+Later on the transport layer, the destination port is inspected.
+
+We'll see which application and which socket is listening on that port.
+
+After the application instance is identified by the O S the TCP Heather is
+
+removed and the message is handed to the application.
+
+At this point, the code we write in the application will handle the message or
+
+form the action and respond to the client using the exact same process.
+
+In this lecture, we'll learn the old essentials of network communication.
+
+We broke it down into four layers based on the TCP IP network model, and went through
+
+a full example of a message traveling from an application on one machine to another
+
+application on another machine.
+
+No.
+
+It's also clear to us why in the service registry we published the Adler's in this
+
+form.
+
+This clearly States our address on the internet layer.
+
+The port will listen to on the transport layer and the protocol we're using in the
+
+application layer, which in the case of HTTP also dictates TCP being used in the
+
+transport layer.
+
+Our next areas of focus are going to be HTTP, which is the most popular and most
+
+important protocol used to connect devices on the web, including in distributed
+
+systems and talk specifically about how to package our data to send efficiently
+
+between different nodes in the cluster.
+
+I'll see also on the, in the next lecture.

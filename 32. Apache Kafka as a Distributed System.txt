@@ -1,0 +1,177 @@
+welcome back everyone in this lecture we'll study Kafka as a distributed
+
+system and learn how it achieves its performance scalability and
+
+fault-tolerance there are a lot of really interesting implementation
+
+details in Kafka which are in constant flux and can easily fill an entire
+
+course so we will only focus on the primary architectural pieces that can
+
+serve us in building our own future distributed systems so how does Kafka
+
+achieve its scalability in performance in the previous lecture we talked about
+
+Kafka topics where publishers can publish their messages and consumers can
+
+consume those messages we also learned to scale a Kafka topic we can partition
+
+it into separate logs so let's understand how those partitions help
+
+scaling Kafka let's talk about a single topic for a
+
+moment and the even Pullman tation of a message broker would be to have a single
+
+instance managing a topic running on a single machine in this approach aside
+
+from the message broker being a single point of failure
+
+there's no way to horizontally scale our topic the message brokers parallelism is
+
+limited by the number of course on the machine and the entire topic has to fit
+
+on a single computer's memory that's why Kafka allows us to divide a
+
+topic into multiple partitions instead of just having one monolithic topic this
+
+way we can launch more broker instances on separate machines and distribute a
+
+topic across those brokers by splitting the partition ownership equally among
+
+them of course we lose the global ordering of the messages within the
+
+topic and have to compromise on ordering only within each partition as we
+
+discussed in the previous lecture that is a trade-off we pay for achieving high
+
+scalability we could initially start with a large number of partitions but a
+
+few brokers and add new brokers as necessary to spread the load of the
+
+messages published to that topic that is a good practice if we start with a small
+
+load but anticipate to grow it over time so essentially from a publisher
+
+perspective the number of partitions in a topic is directly proportional to the
+
+maximum unit of parallelism we have for dot Kafka topic we can estimate that
+
+number of partitions ahead of time given our peek message rate or volume
+
+for every topic in the system and by adding more Kafka brokers we can realize
+
+that potential parallelism up to the number of partitions completely
+
+transparently to the publishers from a consumption point of view Kafka
+
+partitions are divided among the consumer instances within each consumer
+
+group this way each consumer instance handles a fair share of the topic
+
+partitions and as we add more consumers into the group the share of partitions
+
+each consumer has to consume from get smaller so thanks to the partitioning of
+
+the topic you can have many broker instances working in parallel to handle
+
+incoming messages and we can have many consumers consuming in parallel from the
+
+same topic so now that we understand how Kafka handles scalability and
+
+performance through topic partitioning let's talk about fault tolerance
+
+if we look at the current architecture we can already see a big problem if one
+
+broker instance fails we can lose the entire partition with all its data
+
+so each Kafka topic can be configured with a replication factor the
+
+replication factor of n means that each partition of the topic will be
+
+replicated on n Kafka brokers for each partition there is only one broker that
+
+acts as a partition leader and the other brokers act as followers the leader for
+
+that partition and those all the rights and reads to and from that partition and
+
+the followers are actively replicating all the data from the leader and are
+
+passively standing ready to replace the leader if the leader fails
+
+so for example with a topic with four partitions managed by four brokers and a
+
+replication factor of two each partition would be replicated to two different
+
+brokers and for each partition there would be only one broker that acts as a
+
+leader and will handle all the writes and reads and one follower for backup
+
+that would stay in sync with the leader at all times and be ready to take over
+
+if needed the higher the replication factor the
+
+more failures are Kafka cluster can handle but in the same time more
+
+replication means more memory is taken away from the system just for redundancy
+
+purposes and just like the number of partitions that can be different for
+
+each Kafka topic their application is also configured on a per topic basis
+
+Kafka tries it's best to spread the partitions and their leadership burden
+
+fairly among the brokers for maximum efficiency
+
+this pattern of leader and followers should be very familiar to us by now and
+
+in fact Kafka is using no other than our old friend zookeeper for all its
+
+coordination logic Kafka uses zookeeper as a registry for brokers to publish the
+
+information about their address as well as the topics they manage as well as for
+
+monitoring and failure detection using the same techniques like ephemeral Z
+
+nodes and Watchers just like we learned in the beginning of the course
+
+in addition to replication and redundancy Kafka also persists all the
+
+messages to the disk in fact even after consumers consume the messages the
+
+records still stay within Kafka partitions for a configurable period of
+
+time this not only allows new consumers to join and consume older messages but
+
+it also allows consumers that failed in the process of reading or processing a
+
+message to retry the operation without losing any data and finally thanks to
+
+this message persistence fail brokers can recover and resume their operation
+
+almost instantaneously and catch up with the rest of the cluster very fast
+
+so as we can see Kafka aside from being a messaging and streaming platform is
+
+actually by itself a scalable and fault tolerant distributed system that uses
+
+zookeeper for coordinating and managing its own cluster
+
+in this lecture we'll learn how Kafka works is a distributed system and learn
+
+some general lessons we can apply in our own design for example we learn about
+
+partitioning and how it allows us to scale a topic horizontally too many
+
+brokers that run on different machines we also learned that through redundancy
+
+and partition replication across multiple brokers Kafka achieves full
+
+tolerance by persisting the partitions data to disk enable log replay if needed
+
+as well as fast recovery for brokers after a failure and finally we talked
+
+about Kafka's use of zookeeper for all the coordination as well as failure
+
+detection within a Kafka cluster thank you and I will see you in the next
+
+lecture

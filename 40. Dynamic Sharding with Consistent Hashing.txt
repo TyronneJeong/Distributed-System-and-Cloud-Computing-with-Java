@@ -1,0 +1,197 @@
+welcome back to another lecture on distributed databases in this lecture we
+
+will continue the discussion about data sharding specifically it will talk about
+
+some of the hash-based sharding strategy issues and see how we can solve those
+
+issues with a popular and very powerful algorithm called consistent hashing so
+
+what are the issues that we might have if we apply the hash based charting
+
+strategy to distribute our data across the distributed database
+
+in the half-way strategy we have n database shards or instances and we need
+
+to allocate each record to a particular shard by applying a hash function on the
+
+records key modulo n however what happens if we want to add another server
+
+tor database cluster in this case the formula we use to allocate a record to a
+
+particular shard changes so now queries from clients that look for a particular
+
+record by its key will not find the record in the right shard and all the
+
+existing records will have to move to the right location according to the new
+
+sharding formula and the same thing would happen if we want to remove a node
+
+from the cluster we have to reshuffle a large number of keys not only from the
+
+node that is going to be removed but also from other nodes as well
+
+the second problem is if not all the nodes in our cluster have the same
+
+capacity or CPU capabilities in this case we would like to allocate more
+
+records to the more powerful nodes that maybe have more memory and can handle
+
+more concurrent reads while allocating fewer records to maybe older or less
+
+powerful nodes to make sure they don't crash however there is no way for us to
+
+achieve this using the standard hashing method
+
+to address those limitations of the regular hashing algorithm we're going to
+
+learn a new hashing algorithm designed specifically for such scenarios the idea
+
+of consistent hashing is to hash not only the keys but also the nodes and
+
+more importantly hash them all to the same hash space we can use the nodes IP
+
+addresses or any other unique identifiers as keys to using the hash
+
+function in addition to having both the record
+
+keys and notes to the same space we make the hash space continuous by turning it
+
+into a ring now all the keys whose valley is fall
+
+between a particular nodes value in the previous notes position on the ring
+
+belong to that particular node for example a key that falls into the 31st
+
+slot in the ring belongs to node 1 and will be stored on that node in a key
+
+that map's to slot 57 on the ring will also reside on node number 1 however a
+
+key that map's to slot 58 will already belong to node 5 and all the keys that
+
+fall between slot 99 and slot 2 will be stored on note - at this point we
+
+achieved the unique key distribution and 1 are distributed database nodes but we
+
+already had this in the regular hashing strategy we used before so what new
+
+capability is this consistent hashing provide us consisting hashing allows us
+
+to dynamically add or remove nodes from the cluster without reassigning too many
+
+keys which results in moving much fewer records for example if we want to remove
+
+node 2 from the cluster all we need to do is assign all the values in the ring
+
+that used to belong to that node to the next node node number 1 this way all the
+
+records that used to reside on node number 2 will be moved to node number 1
+
+and the rest of the records in the entire cluster remain untouched
+
+similarly if we want to add a new node to the cluster whose hash value falls in
+
+slot 31 only the records in node 1 then hash the values between 99 to 31 will
+
+have to be moved to the new node and again other records with keys then hash
+
+outside the new node boundaries will remain untouched
+
+in addition to the ability to dynamically add and remove nodes from
+
+the cluster with minimal key redistribution consistent hashing is
+
+also flexible to addressing balances in our cluster
+
+using consistent hashing we can easily assign a wider range of keys to stronger
+
+nodes and a smaller range of keys to weaker nodes the way to achieve this is
+
+to map each physical node to one or multiple virtual nodes the more powerful
+
+physical nodes it can be mapped to many virtual nodes and the smaller or weaker
+
+physical nodes can be assigned to a single or fewer virtual nodes this way
+
+and we can build robust database clusters from whatever hardware we have
+
+with no need for additional expenses for example if we have three physical
+
+nodes however note one is twice as powerful as note zero and no two is
+
+three times as powerful as node zero we can map node zero to one virtual node
+
+note one can be mapped to two virtual nodes and no two can be mapped to three
+
+virtual nodes and now statistically there is a higher chance for a key to
+
+belong to no 210 to node one and there is a higher chance for a key to belong
+
+to node one and then two node 0 there's one problem that we might run
+
+into with any hashing algorithm including consistent hashing which is
+
+uneven load distribution because we have just a small number of
+
+nodes we may end up in a situation where after applying a hash function for
+
+example on our cluster nodes IP addresses a disproportionately large
+
+portion of the hash space values up to one of the nodes and a
+
+disproportionately small portion is allocated to another node statistically
+
+this means that much more records will end up in node 1 than in node 0 this
+
+type of an even load distribution can make node 1 a performance bottleneck
+
+while leaving node 0 underutilized the solution to such an unlucky hash
+
+function result in an uneven load distribution is to use not one but
+
+multiple hash functions on each node using multiple hash functions each node
+
+will be mapped to multiple locations on the hash space ring this technique
+
+creates an illusion of having more nodes than we actually have and statistically
+
+it distributes the load more evenly among the physical node
+
+for example we have three nodes and this time we will use not one but two hash
+
+functions for each of those nodes using the first hash function we map node 0 to
+
+slot 99 node 1 to slot 16 and node 2 to slot 65 now if we stopped right here we
+
+already see that node 1 has way more keys to handle than node 2 however now
+
+we'll repeat the same process with hash function number 2 which Maps node 0 node
+
+1 and node 2 to different slots since it's a different mathematical
+
+transformation and now if we look at the keys allocation among the nodes we have
+
+a much better picture now each node has a portion of the keys from different
+
+ranges and there's less chance that a single node will be disproportionately
+
+overloaded or underutilized in this lecture we'll learn about a very
+
+powerful algorithm called consisting hashing using consistent hashing we
+
+mapped both database records and database instances to the same hash
+
+space this allowed us to easily scale our distributed database both up and
+
+down with minimal impact on other nodes and records in addition using consistent
+
+hashing we were able to address capacity imbalances in our cluster and design a
+
+scalable sharded distributed database with a mix of servers with different
+
+hardware capabilities finally we'll learn how to use multiple hash functions
+
+to achieve better load distribution and avoid performance bottlenecks in our
+
+distributed database I hope you enjoy this and I will see you
+
+in the next lecture

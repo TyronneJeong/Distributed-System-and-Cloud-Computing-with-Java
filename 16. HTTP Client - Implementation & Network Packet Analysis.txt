@@ -1,0 +1,350 @@
+hey guys welcome back in this lecture we will complete the other side of the
+
+network communication the HTTP client later after we're done implementing the
+
+HTTP client we'll test our implementation by sending tasks to
+
+multiple worker instances finally we will inspect our network communication
+
+using a very powerful tool called Wireshark so let's start building our
+
+HTTP client code in our course we will use the HTTP client that comes built
+
+into the JDK starting at JDK 11 I want to point out that there are many
+
+third-party implementations of both HTTP server and HTTP client so feel free to
+
+choose the right library for your needs when you build your own application the
+
+key performance features we care about in an HTTP client is the ability to send
+
+HTTP requests asynchronously as well as the ability to maintain a
+
+connection pool to our downstream servers so let's talk about those two
+
+important features in detail in a synchronous communication mode once we
+
+send a request to a server our thread stays blocked until we either get a
+
+response or an error from the server and we can send the next request to the next
+
+server only once the previous transaction is complete
+
+this makes writing the code very easy but we're losing the ability to perform
+
+multiple tasks in parallel by different nodes
+
+in a synchronous mode we can send a request to the server without suspending
+
+a thread waiting on the response once we're done sending out all the requests
+
+we wait until all the responses come back so we can aggregate them the JDK is
+
+HTTP client allows us to do it easily by calling the send a sync method which
+
+returns immediately and provides us with a completable future representing a
+
+future response then when we're done sending all the requests to all our
+
+downstream servers we simply need to join all the futures to get all the
+
+responses the second feature that is important for performance is the
+
+connection pooling if we're sending your request to the same server over and over
+
+again we need to make sure that our HTTP client does not close the connection
+
+immediately after the response comes back from the server otherwise we pay an
+
+unnecessary cost of establishing and closing the connection for every HTTP
+
+transaction typically if both the HTTP server and the HTTP client support HTTP
+
+toom we have the connection polling enabled by default as the protocol
+
+version itself is designed to keep all the communication on a single connection
+
+at all times if at least one of the peers does not support HTTP two we need
+
+to make sure the connection pooling is either enabled by default or we have to
+
+enable it explicitly luckily the built-in HTTP client
+
+supports connection pooling with HTTP 1.1 by default but in most third-party
+
+implementations we need to configure it explicitly by setting the keepalive
+
+parameter to true as of JDK 11 the built-in HTTP server does not support
+
+HTTP 2 so we will see how both entities agree in a protocol version in a case of
+
+a mismatch so let's jump to the IntelliJ IDE and
+
+create the web client class for our HTTP client inside the class the only private
+
+variable we will store is an instance of our HTTP client upon creation of our web
+
+client instance who will instantiate our HTTP client by calling the new builder
+
+method and set the preferable HTTP version to HTTP two we will keep all the
+
+rest of the settings as default and build the HTTP client by calling the
+
+build method now the only method we will have in this class is the send task
+
+method it detects the address of where we want to send a request and the HTTP
+
+message body in a form of a byte array the first thing we need to do is to
+
+create an HTTP request so we call the post method and pass it the request
+
+message body then we set the address of the destination and build a request
+
+finally we call the send a sync method which will send our requests
+
+asynchronously without waiting for the response the first argument to the
+
+method is the request itself and the second argument is an instance of an
+
+object that will handle the response once it arrives we expect the response
+
+in the form of a string so we will pass the body handler created by calling the
+
+off string method then once the response does arrive we'll call the body method
+
+to get just the message body without any headers at this point our web client is
+
+ready so let's move to the class that will call this method to send multiple
+
+requests and later aggregate them so let's create a new class called
+
+aggregator the class will store reference to the web client which will
+
+be instantiated inside the constructor this aggregator class will also have a
+
+single method called send tasks to workers which will take a list of HTTP
+
+server worker addresses and a list of tasks inside the method will create an
+
+array of completable futures which will use to store the future representations
+
+of the HTTP responses who will get from the worker servers then we will iterate
+
+through all the worker addresses in each iteration will get the worker address
+
+then the tasks we need to send to the current worker then we'll convert the
+
+string representation of the task into a byte array and finally we'll send that
+
+byte array payload to the corresponding worker by calling the same task method
+
+of the web client we just implemented after we sent all the requests to the
+
+servers we're going to allocate an array list to store the results then run in a
+
+loop and call the joint method of each future to wait and get the response for
+
+the corresponding request then after we got all the responses from all the
+
+workers we simply return the aggregated responses to the caller if you are
+
+familiar with the streaming API in Java we can rewrite this loop into a single
+
+line it basically does the same thing but just looks a bit more elegantly and
+
+that's all we need to do to send a list of tasks to our workers and aggregate
+
+the responses now let's go ahead and test our
+
+httpclient implementation was sending tasks to two instances of an HTTP server
+
+that we implemented in a previous lecture
+
+so let's create the application class and define the main method to be the
+
+entry point to our application at the top of the class let's declare the
+
+address of the first worker which will listen on port 8081 and expect the task
+
+to arrive on the task endpoint similarly the second worker will run on the same
+
+machine and listen on port 8080 to inside the main method will create our
+
+aggregator object then we will define two tasks the first one is going to be
+
+calculating a product of a pair of small integers 10 and 200 the second task will
+
+involve calculating the product of three very big integers now let's send those
+
+tasks to our workers to be calculated in parallel by calling the same task method
+
+passing it a list of workers and a list of tasks once we have all the results we
+
+simply run in a loop and print them all to the screen and that's it now let's
+
+build and package our application using the maven clean package command and once
+
+the packaging is done let's switch to our terminal in a top window we'll
+
+launch one worker listening port 8081 in the middle window we will launch
+
+another worker listening on port 8080 to and in the bottom window we launch our
+
+HTTP client which will send the tasks to our workers and as we can see we get the
+
+results for all our tasks that were performed by our workers completely in
+
+parallel and even the very complex computation that was sent to the second
+
+worker was performed successfully as an exercise I encourage you to modify the
+
+HTTP client who pass the X debug header to see how long it took for the workers
+
+to perform each of those computations
+
+so now that we have a fully functional implementation of both an HTTP client
+
+and an HTTP server let's learn how to use a small but very powerful tool
+
+called Wireshark Wireshark is a free open-source package analyzer that allows
+
+us to inspect network traffic coming in and out of a particular computer it is
+
+one of the best tools for troubleshooting and debugging network
+
+issues they're otherwise very hard or sometimes impossible to troubleshoot
+
+inside our code it is also a great tool for learning how the protocols actually
+
+work as any packet can be easily inspected down to the individual bytes
+
+I went ahead and open Wireshark at the top part of the screen in a small
+
+terminal window at the bottom of the screen at the top of the Wireshark
+
+window we can filter the messages were interested in so we don't get
+
+overwhelmed once we started capturing the network packets in this example
+
+we're going to inspect the network traffic from our HTTP client to one of
+
+our HTTP servers so we're going to filter on the TCP packets whose
+
+destination port is 80 81 or its source port is 80 81 this way we're going to
+
+capture all the requests and responses going between the HTTP client and the
+
+server listening on that particular port now let's start capturing the packets by
+
+clicking on the sail button then we go down to our terminal and send a request
+
+from the HTTP client to our worker by running our program and as we can see
+
+once we did that Wireshark captured all the TCP packets
+
+corresponding to our transaction for each packet we can see the direction of
+
+the packet for example the first packet is going from the outer generated port
+
+on the client to port 8081 on the HTTP server the second packets Direction is
+
+the opposite which means it went back from the HTTP server to the HTTP client
+
+as a response to the first packet we can also now see how many messages it
+
+actually takes to accomplish a simple HTTP request/response transaction
+
+between two entities in particular Wireshark highlights the connection
+
+establishment and the connection shutdown overhead associated with this
+
+transaction using this dark gray background if we click on the HTTP POST
+
+request we see all the networking layers we discussed in the lecture about
+
+networking for example we can see the frame that encapsulates the entire
+
+packet which comes from the data link layer inside the frame we can see the IP
+
+headers associated with the network layer then
+
+underneath it we can see the TCP header is associated with the transport layer
+
+where among other headers we can see the source and destination port for that
+
+particular message and finally we can see the HTTP envelope it corresponds to
+
+the application layer also notice that the HTTP client is
+
+using the HTTP 1.1 version however it also sends those two headers suggesting
+
+an upgrade to HTTP 2 this way if the server does not support HTTP 2 it can
+
+still respond to the request by simply ignoring those 2 headers but if the
+
+server does support HTTP tune it would upgrade the transaction and continue the
+
+communication on a higher version of the protocol also if we scroll to the bottom
+
+of the request we can see the actual message body in a binary format notice
+
+how much overhead and data has to travel through the network just to deliver
+
+those 6 bytes of data so we need to remember this picture in our head every
+
+time we want to send a message and see if we can maybe batch some requests to
+
+improve the efficiency now let's also see how we can check if connection
+
+pooling is enabled and how it can save as some network overhead let's go back
+
+to our main method and instead of sending one message to each worker
+
+we'll send both messages to the same worker also as we mentioned earlier we
+
+can reuse the same connection only if the entire transaction that occupied
+
+that connection has already been completed to ensure that just for
+
+testing purposes let's add a short delay between the first and the second request
+
+to allow enough time for the response to the first request to arrive at a client
+
+now let's rebuild our application then we go back to our terminal and send both
+
+requests to the same server and as we can see in Wireshark thanks to the
+
+connection pooling that is enabled by default we establish the communication
+
+only once then we reuse the same connection for both transactions and
+
+shut down the connection in the end in this lecture we'll learn how to use
+
+an HTTP client and send tasks to multiple worker nodes using the a
+
+synchronous HTTP client API were able to send those tasks to be performed in
+
+parallel by all the workers we also learn how to use Wireshark
+
+to inspect the network communication between two different entities
+
+in this particular example we're able to see how protocol negotiation works and
+
+discover that one of our entities supported only HTTP 1.1 so maybe if the
+
+number of connections becomes a problem for us we may consider changing our HTTP
+
+server implementation to another library we also saw how much overhead is
+
+involved in sending just a few bytes of data which is inevitable but maybe we
+
+can rethink our strategy and batch multiple tasks in one request to improve
+
+our communication efficiency finally we saw how connection pooling works and how
+
+it allows us to reuse an existing connection instead of creating a new one
+
+for each individual transaction thank you and I will see you in the next
+
+lecture
+

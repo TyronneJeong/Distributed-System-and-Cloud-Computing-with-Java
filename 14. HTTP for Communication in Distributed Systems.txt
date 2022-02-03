@@ -1,0 +1,295 @@
+welcome back in this lecture we will continue our discussion about network
+
+communication and focus on the HTTP protocol fundamentals as well as the
+
+structure of the HTTP request and the HTTP response so first of all why are we
+
+focusing on HTTP I hope we're all convinced by now
+
+that without an easy way to communicate between nodes that we can't really build
+
+a distributed system and the HTTP is the most convenient popular and most
+
+importantly flexible protocol to communicate between different computers
+
+the HTTP protocol allows us to almost entirely remove ourselves from any layer
+
+underneath the application layer and focus on building our applications logic
+
+as well as sending messages between computers with ease
+
+HTTP was initially designed to serve content from the web server to the users
+
+web browser however in our course will focus on the use of HTTP in distributed
+
+systems for communication between compute nodes rather than for serving
+
+content to the end client every HTTP transaction has two parts a request that
+
+is sent from the client to the server and the response sent from the server
+
+back to the client even if the client doesn't need any data from the server
+
+the transaction is never considered complete until the client receives even
+
+an empty response back from the server with a status indicating the outcome of
+
+the request now let's first focus on the structure of the HTTP request sent from
+
+the client to the server every HTTP request consists of those
+
+five parts the first part is the method which gives the server a hint about the
+
+action it needs to take then comes the relative path which helps in routing the
+
+request to the appropriate request handler in our code after that comes the
+
+HTTP protocol version which is very important in how the communication is
+
+managed between the two entities later we have the optional set of HTTP headers
+
+which are just key value pairs containing additional information about
+
+the content of the message or the connection between the peers and finally
+
+we have the optional message body which can be in almost any format or size so
+
+let's talk about the HTTP method first the HTTP method can be any of the
+
+following set of standard methods each of those methods has precise semantics
+
+and definition and it's primarily important to adhere to those semantics
+
+if we intend to communicate with entities outside of our cluster we're
+
+going to primarily focus on two of those methods which are the most common when
+
+communicating within a distributed system the methods are the get and the
+
+post the get method handler implementation should have these two
+
+properties it's safe which means the only action a server receiving the get
+
+request should take is retrieve some data or report its internal state and
+
+have no side effects just like a simple getter method in Java the handling of
+
+the get method should also be idempotent which means that perform in this
+
+operation end times gives the same result or has the same effect as
+
+performing it only once also the get request does not contain
+
+any message body which is in line with the purpose of the request
+
+a get request can be used for example by a service that periodically sends a
+
+request to check the health of each node in the cluster and if one of those node
+
+stops responding the health check service may restart the faulty node and
+
+bring it back to life another use case can be data retrieval
+
+that spends multiple microservices for example a user can send a get request
+
+from the browser to a front-facing service requesting data about all the
+
+purchases he made in the last month that service instead of having to talk to
+
+different databases which all have their own protocols and structures can simply
+
+send an HTTP GET request to the users micro service which completely obstructs
+
+away the users data storage then it can make a similar HTTP GET request to the
+
+purchases micro service which may use a completely different type of database in
+
+the end the user facing service would aggregate the data from both services
+
+build up the visual representation for the data and send it back to the user
+
+this way each service is concerned with its own logic and all the communication
+
+is done through simple HTTP requests the post method is almost the opposite
+
+of the get method unlike the get request it contains a
+
+message body the operation performed by the post request can have side effects
+
+and specifically in the case of distributed systems we expect to have a
+
+result of a complex computation as a result of the request because the post
+
+requests can carry a message body it will be more useful for us to send
+
+messages between different nodes the next part of the request is the
+
+relative path the relative path is the part that comes
+
+in the URL after the host and port this makes it easy in our application to
+
+decide what part of the code needs to handle this particular request as part
+
+of the relative path we may also provide a query string which may contain a few
+
+helpful parameters to perform the operation
+
+going back to the distributed data retrieval we can see an example of how
+
+the relative path and the query string can be used to get the data we need both
+
+from the user facing service and the individual microservices
+
+the protocol version is very important and how the connection is managed
+
+between the client and server the two versions that we will see mostly used
+
+nowadays are 1.1 and HTTP 2 with HTTP 1.1 when the client for a
+
+sensor request to the server a new TCP connection has to be established which
+
+has some overhead then the client can send a request to the server using that
+
+connection in this version until the client receives a response to the first
+
+request it cannot send any additional requests on the same TCP connection then
+
+when the response to the first request arrives at the client another request
+
+can reuse the same connection and save the overhead of creating a new
+
+connection for the new request if the operation the server is
+
+performing as a result of the first request takes a long time and we are
+
+forced to create more connections between the client and the server to
+
+send more requests creating a new connection for every
+
+single request is expensive and increases the latency between the client
+
+and the server also the number of outgoing connections a single host can
+
+maintain is limited by the number of available TCP ports as well as by the
+
+operating system so we may end up with so many connections that our replication
+
+will crush on the other hand if one of the TCP
+
+connections breaks the other connections stay unaffected
+
+HTTP tune handles the connection a bit differently instead of creating a new
+
+connection for each request response pair the protocol can interleave
+
+multiple requests and responses on the same connection this interleaving is
+
+completely transparent to us and is done by logically breaking the connection
+
+into multiple internal streams the next part in the HTTP request is the
+
+HTTP headers the headers are key value pairs of strings that come in a format
+
+of a name followed by a colon followed by the value or a list of values
+
+delimited by a semicolon there are many standard headers which
+
+are used for many purposes some of the headers are used only in requests or
+
+only in responses and some of them are used in both since the headers come
+
+before the message body based on those headers the recipient can take
+
+preliminary actions such as memory allocation or it even may decide to skip
+
+the reading of the message entirely and forward it to another service for
+
+example we can provide the recipient with some information about the message
+
+body's length the type of the message or the format using the content type header
+
+or the content encoding to tell the recipient what compression algorithms to
+
+use it to decompress the message in addition to the standard set of headers
+
+we can also create our own headers for example we can pass a boolean header
+
+that asks the server to pass as more debug information in the response
+
+regarding the actions it's taking while handling the request we can turn on
+
+certain experimental features that will only apply to that particular request
+
+which can be very useful for a/b testing and experimenting with new features in
+
+production another use case is passing a header that indicates that this request
+
+should operate on test data instead of real customers data and for testing
+
+purposes finally we can even add timestamp headers to instrument our
+
+entire transaction it can spend multiple services this can give us a clearer
+
+picture of how long each step of the computation takes across the entire
+
+cluster instead of just on a single machine
+
+in the 1.1 version of the protocol the headers are passed in plain text which
+
+can be easily inspected using a network debugging tool like Wireshark for
+
+example in HTTP 2 however the headers are compressed for efficiency which
+
+saves on the payload size but also makes it harder to debug them
+
+the last but definitely not least part of the HTTP request is the message body
+
+inside the message body we can put absolutely anything we want as long as
+
+we agree that whoever receives the message knows how to parse it the
+
+message body can contain complex data objects we'll talk specifically about
+
+how to pass such structures between two nodes in another lecture
+
+now that we're deeply familiar with the HTTP request structure will see that the
+
+HDP response is actually very similar to the request the only difference is the
+
+first part which now contains the status code and the message instead of the path
+
+and the method the response status codes are divided
+
+into five groups the most important ones for us is the 200th group where we have
+
+the status code 200 which indicates success then we have the 400 group which
+
+indicates the de client request was somehow faulty the last important group
+
+is the 500 group which indicates that the error occurred on the server side
+
+this time so the request cannot be processed as intended
+
+before we move to the implementation of the communication between nodes using
+
+HTTP let's quickly summarize what we learn in this lecture we learn about the
+
+different components of the HTTP request and the HTTP response primarily we
+
+focused on the difference between the get request and the post request and in
+
+which scenario we want to use them we also covered the difference between how
+
+the connection is handled in HTTP 1.1 and HTTP 2 finally we talked about how
+
+to use the standard HTTP headers and how to create our own which can help us in
+
+debugging instrumentation and many other use cases and we concluded with talking
+
+about the different HTTP status codes and how to interpret them
+
+we're now ready to use all this knowledge in practice and establish
+
+their recommendation between different nodes in the distributed system which we
+
+will do very soon in the next lecture

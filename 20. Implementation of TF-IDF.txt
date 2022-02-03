@@ -1,0 +1,454 @@
+Welcome back.
+
+In this lecture, we will continue building our system for distributed search by
+
+implementing the term frequency, inverse document frequency algorithm.
+
+In practice, we will implement the algorithm in a way we can later reuse in a
+
+distributed system.
+
+But in this lecture, we will test it in a context of a sequential execution on a
+
+single machine.
+
+So let's start with the implementation of the TF IDF algorithm.
+
+It's a reminder giving a search query, which we can break and do individual
+
+terms.
+
+We can calculate the score for each document by summing the products of the
+
+term frequency and the inverse document frequency of each term, the therm
+
+frequency for each Thurman.
+
+A document is simply calculated by counting how many times the term appears
+
+in the document and dividing by the number of words in that particular document.
+
+The inverse document frequency is calculated by taking the log of the ratio
+
+between the number of documents we have in our repository and the number of documents
+
+that contain that term at least once.
+
+After we score each document, we soared the documents by the score in a descending
+
+order, and we're done.
+
+Now let's go ahead and implement that algorithm.
+
+We start with a blank project and two empty packages to help us organize our
+
+code in a way we can reuse it later.
+
+The module package will have some help data classes.
+
+In the search package.
+
+We'll have all the search related classes we will create shortly in the resources
+
+directory.
+
+We have a set of about 20 classical books, which will serve us as the documents in
+
+our example.
+
+So let's create the term frequency, inverse document frequency clause.
+
+The first step in implementing our algorithm is to calculate the term
+
+frequencies.
+
+So let's create the calculate them frequency method, which thinks a list of
+
+words in a particular document.
+
+And the term we want to count its frequency inside the method.
+
+We either it over every war and if the word equals store search term, then we
+
+increment the counter count.
+
+In the end, we divide the number of times the term appeared in the document by the
+
+overall number of words, which will give us the terms frequency, which were
+
+returned from the method.
+
+No, let's create a helper clause called document data.
+
+In the model package.
+
+In that class, we simply store a map from a search term, which term frequency.
+
+In that document.
+
+Also, we will add two helper methods.
+
+The first one is the put term frequency, which we'll add the therm and its
+
+frequency in that document into the map.
+
+And the second method get frequency in which given a search therm will return the
+
+term frequency for that document.
+
+No lads, go back to the TF IDF class and implement the second method related to the
+
+term frequency calculation, which were, we'll call it create document data.
+
+This method will calculate all the terms frequencies for a given document and put
+
+all that data inside a document data object.
+
+So let's start with creating the document data object, then iterate over all the
+
+search terms, calculate its frequency in that document by calling the calculate
+
+term frequency method, and then simply put that result into the document data.
+
+Once we're done with all the search terms, we have all the data we need in terms of
+
+term frequencies for the given document.
+
+Now, let's go to the second part of the algorithm, which is the calculation of the
+
+inverse document.
+
+Frequency is the first method we're going to implement is going to be called get
+
+inverse document frequencies.
+
+The method will take a single term and the map that contains all the term frequencies
+
+for all the documents that map simply maps from a document name to its document data
+
+object.
+
+So let's define the NT variable, which is the number of documents that contain the
+
+given search term.
+
+Then we'll loop over all the documents and for every document, we first get the
+
+already calculated document data object, then the term frequency of the given term
+
+in that document, and if it's greater than zero, that means that the term does indeed
+
+appear in that document.
+
+So in that case, we simply increment the anti variable and move to the next
+
+document.
+
+After we're done with all the documents, we calculate the IDF by taking the log
+
+based 10 of the number of documents divided by N, T, which is the number of
+
+documents that contain the given term to avoid a potential division by zero.
+
+If a term does not appear in any document, we simply return zero.
+
+And we could really return any value in this case because the inverse document
+
+frequency is going to be later multiplied by the term frequency when we calculate
+
+the score for that term, but if the term doesn't appear anywhere, then its term
+
+frequency is going to be zero anyway, so it really doesn't matter what value we're
+
+going to return.
+
+If N T equals zero.
+
+Now this method, the calculator, the IDF for one Therma.
+
+Now let's create a method that will calculate all the inverse term frequencies
+
+for all the therms, the method that we'll take a list of terms and that same map
+
+that maps from a document to a document data, and we'll return a new map that maps
+
+from a particular search term, who it's IDF.
+
+So let's create the term to idea of hash map and iterate over all the search terms.
+
+For every search term.
+
+We calculate the inverse document frequency by calling the get university
+
+document frequency method.
+
+We implement an a moment ago.
+
+Then we simply put that value in the map and once we're done calculating all the
+
+IDFs for all the terms were returned, a map to the color.
+
+At this point we have all the methods.
+
+We need to both calculate the term frequencies for all the documents and the
+
+methods to calculate all the inverse document frequency is for all the search
+
+terms.
+
+So now we just need to glue those methods together to calculate the score for each
+
+document.
+
+So let's create the calculate documents score method, which will take the list of
+
+search terms, the document data object corresponding to a particular document,
+
+and the map that maps from a search term to it's inverse document frequency.
+
+Inside the method.
+
+We either it over all the search terms, get the term frequency for that term in
+
+the document, then get the inverse term frequency for that term and multiply them
+
+together.
+
+We sum all the scores of all the terms in the search query and a return that
+
+documents score from the method.
+
+Now the last piece we need to bring everything together is to calculate all
+
+the scores for all the documents and store them.
+
+So we're going to create the GED documents sorted by score method, which will again
+
+take a list of search terms.
+
+And the map that maps from a document which document data inside the method that
+
+we first declared the tree map that maps from a score to a list of documents.
+
+The reason we use a tree map is to make sure that our map is sorted by the score
+
+as we go.
+
+So once we put all the documents in that map, it will already be sorted for us.
+
+And the reason the value for each score is not a document, but a list of documents is
+
+because we may have multiple documents with the same score.
+
+So the first step in our method is going to be getting old inverse document
+
+frequency is for all the search terms by calling the get thrown through inverse
+
+document frequency map method.
+
+Then we eat the red over all our documents.
+
+For each document.
+
+We first get the document data object, and then we calculated score by calling the
+
+calculate documents score method.
+
+No, we need to just store the document and the score and the score to documents map,
+
+which will delegate those separate method.
+
+And after we calculate all the scores for all the documents where it turned the
+
+descending map version of the score to documents map, this way, the color of this
+
+method will get a map, or they're from the most relevant documents that have the
+
+highest score to the least relevant documents with the lowest score.
+
+The last step is to complete the method that puts the document and the score in
+
+the tree map and the Smith ed.
+
+If we already have some documents with the current score in the map, are going to try
+
+to get that list by calling the get method, and if this is the first document
+
+with that score, we create a new list.
+
+Then we simply add the given document to that list and update the tree map with the
+
+documents core.
+
+And that's it.
+
+We are done implementing the TF IDF algorithm.
+
+No.
+
+While we're still in this clause, let's implement two more small helper methods,
+
+which will help us in parsing our input.
+
+Remember that our search query is going to be a full sentence coming from the user.
+
+And the documents are lists of flights, which we'll also need to break into words.
+
+So let's create the gift wards from line, which will take a single string, which we
+
+will split into awards by using a regular expression.
+
+We will use duck method to break a search query into a list of search terms, but we
+
+will also use it in the second method we're going to create, which is the gift
+
+wards from lines.
+
+This method will take a list of lines we read from the document and break each line
+
+in Doyle list of words, an add all the words into a single list and return it to
+
+the color.
+
+Now that we implemented the TF IDF algorithm, let's put it to the test
+
+sequentially.
+
+If a small repository of 20 books.
+
+So let's create the sequential search glass, which will have our main method.
+
+At the top.
+
+We'll define the location where we're going to pull all the documents from
+
+inside.
+
+The main method.
+
+We're going to open the books directory and get the list of all the books in sided
+
+with the path pre pended to them so we can read each document individually.
+
+Then let's define three tests.
+
+Search quarries that will hopefully give us some logical and irrelevant results.
+
+We then called the get wards from line two, pars the search query in the list of
+
+search terms, and finally we call the fine most relevant documents method, which
+
+we'll call our algorithm and get the results for us.
+
+The method will take the list of documents and the search terms as arguments inside
+
+the method that were first create an empty document data map, which will store the
+
+mapping between a document and its term frequency data.
+
+Then we either it over all the documents, we're forced to read each document from
+
+the file.
+
+Then we break that document into lines of text.
+
+After that, we take those lines and break them into individual words.
+
+Then we feed those words and the search terms into our algorithm, which calculates
+
+the term frequency for each of the search term and the returns, the document data
+
+object for that document.
+
+In the end, we simply put that document data into a map.
+
+This point we have all the data we need from the documents, so all that's left is
+
+to feed it through the second part of the algorithm, which is implemented in the get
+
+documents sorted by score, which will calculate the inverse document frequency
+
+for all the terms and produce a sorted map of our documents based on the relevance
+
+score.
+
+And that's it.
+
+The last part we need is to print the results.
+
+So let's define the print results method, which we'll take the results map in the
+
+method we eat there.
+
+It over every pair of score and documents store the score in the score variable, and
+
+for every document that has that particular score, we print out its name
+
+and its corresponding score.
+
+This way, we can see not only the order of relevance, but also how confident our
+
+algorithm is.
+
+It's one document is more relevant than the other.
+
+So now is the moment of truth for our algorithm.
+
+So let's test it with the first search query, which is the best detective that
+
+catches many criminals using his deductive methods.
+
+And then we can see that the most relevant book is the adventures of Sherlock Holmes,
+
+which exactly matches the search query and is also one of my favorite detective books
+
+of all times.
+
+Now let's test our algorithm with the second search query, which is the girl
+
+that falls through a rabbit hole into a fantasy Wonderland.
+
+And some of you may already guess that the book that should match the search query is
+
+Alison Wonderland, and indeed the book that scored the highest is Alice's
+
+adventures in Wonderland.
+
+Let's run our algorithm through one more query, which is the war between Russia and
+
+France in the cold winter, and obviously the most relevant book here is war in
+
+peace by Leo Tolstoy, which is exactly about the topic described in the query.
+
+In this lecture, we implemented the term frequency, inverse document frequency to
+
+find the most relevant documents in our small collection of 20 books based on a
+
+user supplied search query.
+
+This algorithm is definitely no match for the advanced algorithms that big search
+
+companies have built over the years, but despite its simplicity and the small
+
+number of documents we had in our air pository, it performed very well.
+
+The TF IDF is commonly used not only for search queries, but also for grouping
+
+documents that share a similar topic simply by feeding the entire document as a
+
+search query and finding the documents that are most relevant to the input
+
+document.
+
+Now that we have the algorithm ready, we can go ahead and build out all the
+
+components of our distributed system to run this algorithm on a larger number of
+
+documents using a larger number of nodes.
+
+So in the next lecture, we'll think how to parallelize the algorithm and what pieces
+
+we need to get our system ready.
+
+I hope you're having fun and I will see you in the next lecture.
+

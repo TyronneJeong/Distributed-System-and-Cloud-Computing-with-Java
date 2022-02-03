@@ -1,0 +1,398 @@
+welcome back to another lecture on load balancing in this lecture we will apply
+
+everything we learn about load balancing in practice using a software load
+
+balancer called H a proxy we'll start with a short introduction to H a proxy
+
+and later we will demonstrate how to use it to provide load balancing
+
+capabilities high availability and advanced routing will also demonstrate
+
+how to use aja proxy in different networking layers just like we learned
+
+in the previous lectures of course we won't cover all of HF proxies features
+
+here is that may take an entire course by itself but nevertheless by the end of
+
+the lecture we'll have a pretty powerful load balancer in our disposal so what is
+
+H a proxy eh-eh proxy is a reliable and
+
+high-performance load balancer that can operate on the TCP and HTTP networking
+
+layers it's a very popular free and open source software load balancer that
+
+powers many distributed systems web applications and websites and is
+
+considered to be almost a standard for load balancers in the industry as we
+
+will see very soon is actually very easy to set up which makes it perfect for us
+
+to demonstrate and practice load balancing but despite its simplicity and
+
+has a lot of very advanced features and capabilities which are so important for
+
+production systems eh-eh proxy is a native application that
+
+is typically installed on a Linux machine for maximum performance so
+
+naturally it officially supports only Linux but this will not be an obstacle
+
+for us and I will show you how we can easily run it on any platform including
+
+Windows and Mac OS in a later lecture all of h.a proxies logic comes from a
+
+configuration file that is either loaded from a predefined location or is passed
+
+to it in the command line the config file consists of two main
+
+sections the first one is the global section we defined parameters for the
+
+entire load balancing process the second is the proxy section where we define all
+
+the logic and strategies of routing of the incoming traffic to our back-end
+
+servers the proxy section contains an optional default sub section where we
+
+can set default parameters that will apply to all of our networking proxies
+
+the next sub section is the front-end which describes the listening sockets
+
+for all the incoming requests from the client and the logic on how to handle
+
+them the backend sub section describes a set of servers that participate in our
+
+back-end cluster and optionally in some cases we can combine the front-end and
+
+the backend sub sections into a single listen section
+
+here's an example of a simple H a proxy config file at the top we can see the
+
+global section that defines the limit on the number of connections for the entire
+
+load balancing application the default section defines some default parameters
+
+that are applicable to both the front end and the back end and the front end
+
+and the back end sections the define on which port h a proxy expects to receive
+
+traffic and what servers this traffic will be routed to so now that we
+
+understand the basics of H a proxy and its configuration let's go ahead and
+
+demonstrate how we can use it for load balancing in practice
+
+I went ahead and built a very simple web application it simply shows a web page
+
+with the server's name we passed it in the command line so let's launch three
+
+instances of this application to demonstrate a chip proxies capabilities
+
+the first instance will listen on port 9000 1 and will be called server 1 the
+
+second will listen on port 9000 and 2 and will be called server 2 and the last
+
+one will listen in port 9000 and 3 and will be called server 3 generally when
+
+we load balance between multiple servers we actually want them to appear
+
+identical however in this case we actually want the opposite so we can
+
+follow where our requests are routed now let's open the web browser and see what
+
+our web servers pages look like it is best to test it in a private or
+
+incognito mode since some browsers may start caching the results which were
+
+interfere with our testing now let's open a new text file which we'll call H
+
+a proxy dot CFG where we will place all the configurations that will tell H a
+
+proxy how to route incoming traffic to our back-end servers we'll start with a
+
+global section which as we mentioned contains the process white parameters so
+
+for example we're going to limit the overall number of connections Asia proxy
+
+can accept from the clients to 500 this is a good practice since we don't want
+
+our load balancer to crash if there are suddenly too many incoming connections
+
+then in a default section we'll set the load balancers operating mode to HTTP
+
+which means it's going to be a layer 7 load balancer later we'll set the
+
+timeout limits for connecting from the H a proxy to our back-end servers to 10
+
+seconds then we'll set the timeout limit for the inactivity from the clients to
+
+50 seconds in the timeout limit of an activity of one of our back-end servers
+
+to also 50 seconds those numbers are completely arbitrary and in production
+
+we would definitely want to tune them depending on the actual system the first
+
+interesting section is the front-end which we will call HTTP in in this
+
+section we first declare that H a proxy will act as an HTTP server which will
+
+listen all connections on port 80 and once it gets a request
+
+it will route it to the default beckon cluster we call application notes now to
+
+complete the routing will define the application note section which will
+
+contain a server called server one whose address is the first web app instance we
+
+launched on port 9001 the second server in the cluster is called server two and
+
+points to our second application instance and the final third server is
+
+called server 3 which is listening on port 9000 and three the names of the
+
+servers as well as the backend cluster are entirely up to us the final piece to
+
+complete the configuration is to tell H a proxy what strategy to use for load
+
+balancing on those servers so for simplicity we'll start with from Robin
+
+now let's go back to our terminal and start H a proxy which I already have
+
+installed in my machine and point it to the configuration file we just created
+
+now in the web browser we can simply type localhost which implies port 80 and
+
+as we can see each time we refresh the page H a proxy aroused the request to a
+
+different application server in a round robin order now let's go back to the
+
+config and augment the round robin strategy by giving the server's
+
+different weights which will change our strategy to a weighted round robin
+
+since server 3 is weighted 2 times lower we expected to get 2 times fewer
+
+requests so let's restart H a proxy and now as we can see the first two servers
+
+get two requests each for every request that goes to server 3 HHA proxy has a
+
+lot more load balancing strategies like we learned and even more so you're more
+
+than welcome to try them all out on your own
+
+now that we saw how we can easily apply different load balancing strategies to
+
+balance the load on our servers let's see how we can use a proxy to also
+
+provide high availability let's restore the regular round-robin
+
+strategy restart H a proxy for that to take effect and also kill server 3 to
+
+simulate a failure in our cluster now as we can see every time it servers 3 stern
+
+we get an error since the load balancer does not know that servers 3 is done
+
+luckily each of our servers has the Status endpoint it simply returns HTTP
+
+status 200 and also sends back the word server is alive so let's go to our H a
+
+proxy and use this endpoint to query each other servers health
+
+first we will instruct H a proxy to send get request to the Status endpoint using
+
+the HTTP check option will also add the check keyword for each server to
+
+instruct H a proxy to send a periodic health check to each of those servers
+
+now let's restart a load balancer and as we can see at the top our healthy
+
+servers started getting health checks every second and at the bottom we see
+
+that H a proxy detected that servers 3 is not responding and is currently
+
+unavailable now if we go back to our web browser and type localhost we see that H
+
+a proxy is now smart enough to send traffic only to the two healthy servers
+
+we have in our cluster and as soon as server 3 gets back online
+
+H a proxy detect that it is now up and adding it back to its load balancing
+
+rotation we can even make our health checks as complex as we want for example
+
+we can add the HTTP check expect line with the strength parameter which tells
+
+H a proxy to inspect the string we get in the HTTP response message back from
+
+the health check endpoint for example we can instruct it to match the response
+
+with the server is a live string since this is exactly what our servers return
+
+from the Status endpoint after restarting the load balancer all our
+
+servers are considered healthy however if we change the string to
+
+something else as soon as we restart a Qi proxy it considers all the servers to
+
+be unavailable this configuration is very useful if our web applications
+
+themselves talk to other databases or services so if one of those downstream
+
+services is down our back-end server can proactively remove itself from the
+
+rotation were responding to the health check with a different message than what
+
+the load balancer expects in addition to parsing the health check responses we
+
+can even control the frequency of the health check for each server by setting
+
+the time interval between consecutive health checks
+
+it's a proxy comes with a very powerful admin page for monitoring
+
+order to show it we will need to create a front end so we can tell H a proxy on
+
+which for to listen to and route all those requests to an empty beckoned
+
+section where all we do is enable the stats page at the root URI for this
+
+simple case we can combine the front end and the back end sections into a single
+
+listen section we're just like in the front end we tell HT proxy to listen on
+
+port 83 and just like in the backend section we can simply enable the stats
+
+page in the route or right now if we restart H a proxy and go to the web
+
+browser where we send a request to local host port 83 H a proxy shows us this
+
+admin page where we can see our HTTP in front-end with all its statistics our
+
+application node cluster where we can see all the overall statistics for the
+
+backend section as well as each back-end server starts individually in particular
+
+we see that all the servers appear green which means they're all healthy and at
+
+the bottom we see the stats page which also includes the front-end and the
+
+backend sections all together now let's send a few requests to localhost port 80
+
+which in turn will send request to our back-end servers and if we load the
+
+start page again we can see that our application nodes receive two requests
+
+which went to server 1 and server 2 we can also see how long each session with
+
+the individual servers lasted as well as how many bytes were sent to and from
+
+each server this admin page can be very useful for debugging and monitoring of
+
+our entire distributed system so for example if one of our servers becomes
+
+unavailable we can clearly see that it appears with a red background in our
+
+stats web page with H a proxy we can do a lot more advanced routing than just
+
+simply pairing each front-end with a single back-end cluster
+
+using excess control lists we can inspect an incoming your requests in the
+
+front end classify it based on its content and dynamically route it to a
+
+separate back-end cluster so let's clean up our configuration a
+
+bit and separate our application note backend into two back-end clusters the
+
+first one is going to contain the odd servers 1 and 3 and the second cluster
+
+will contain the only even server we have which is server 2 we'll also name
+
+the clusters or duplication nodes and even application notes respectively now
+
+in the front-end section instead of just routing all the requests to the same
+
+back-end will create two access control lists the first one will be called even
+
+which is defined as all the HTTP requests whose relative path ends with
+
+the word even and similarly will declare the audit access control list which is
+
+defined as all the HTTP requests whose relative paths and with the word odd
+
+then we'll tell H a proxy to route the request to the even application nodes
+
+back end if the request belongs to the even access control list and route it to
+
+the other plication nodes back-end if the request belongs to the Audax s
+
+control list so let's go ahead and bring server 1 back online and restart h a
+
+proxy for all those changes to take effect and this time we'll send a
+
+request to localhost / even we should route this request to our even cluster
+
+that consists of only one server server 2 now if we change the request URI to
+
+localhost / odd H a proxy will route the request to our order plication nodes
+
+cluster which has two servers and our load-balanced using round robin
+
+now that we experimented with quite a few features of the HTTP load balancing
+
+mode let's see how aji proxies layer for operating mode looks like let's first go
+
+back to our previous simpler setup and in the defaults change our operating
+
+mode from HTTP to TCP this will force the load balancer to operate in the
+
+transport networking layer which understands only TCP and does not know
+
+anything about HTTP which is a higher networking layer after restart in a che
+
+proxy we already get a warning that our stats page will not be available that's
+
+because the stats page was available through Asia proxies HTTP server then if
+
+we open the browser and keep sending your requests to localhost suddenly all
+
+our requests are going to the same server instead of each request being
+
+sent to a different one the reason for this behavior is any time we refresh the
+
+browser we actually send a new HTTP GET request to a che proxy
+
+however all those requests are still sent on the same TCP connection since
+
+our load balancer now does not understand HTTP as far as its concerned
+
+all the TCP packets belong to the same stream and hence will be sent to the
+
+same server to break the TCP connection and open a new one for each request we
+
+need to close the web browser entirely and once we open a new browser instance
+
+and send a new request to localhost and new TCP connection will be established
+
+now this new connection will be routed to a new back-end server based on the
+
+round-robin policy in this lecture we'll learn about a very
+
+powerful open-source software load balancer called a Qi proxy using a proxy
+
+we applied everything will learn about load balancing in practice we practice
+
+the basic capabilities of a layer seven load balancer we experimented with a few
+
+load balancing strategies like round-robin and weighted round robin
+
+later we add in high availability using simple as well as advanced content based
+
+health checks we also practiced advanced routing based on the incoming HTTP
+
+request content and finally we compared the layer 7 HTTP load balancing to the
+
+somewhat limited but very simple layer for load balancing
+
+thank you and I will see you in the next lecture
+

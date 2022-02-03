@@ -1,0 +1,433 @@
+welcome back to another lecture in this lecture we'll take our
+
+distributed database to a new level of scalability and learn how to run a shard
+
+at MongoDB cluster in practice we will also go through a complete real-life
+
+example of shard in a database with multiple collections is in different
+
+keys and different charting strategies so let's start with a cluster diagram
+
+we're going to build as we remember from the previous lecture
+
+the minimum components we need to run a sharded cluster are the shard nose
+
+themselves the Mongo s router whose job is to route queries from the client
+
+application to the correct shard and they can fix server cluster whose job is
+
+to maintain all the shards related data as well as to perform the balancing of
+
+chunks among the different shards of course for complete fault tolerance in
+
+production we would want to run each shard as a replication set and have a
+
+pool of Mongo as instances instead of one but we will keep it simple for now
+
+and have one of each for testing purposes
+
+so let's go ahead and launch our shard at MongoDB cluster which will have to
+
+shards first we need to launch our config server cluster so we will need
+
+three directories one for each config server replication set member will call
+
+the first directory can fix server 0 the second directory can fix server 1 and
+
+the third directory can fix server 2 once we have those three directories
+
+let's launch the first config server instance by running the Mongo d instance
+
+with the config server parameter set its replication set to config RS point it to
+
+its own directory bind it to local host and tell it to listen on port 27 0 20
+
+similarly we're going to run our second config server Mon with the instance set
+
+its replication set to configure s as well and ask it to listen on port 27 0
+
+21 and finally the third config server in the configure s replication set will
+
+listen on port 27 0 22 this step was completely identical to running a
+
+regular MongoDB replication set except that the role of those mangu the
+
+instances that was set to config server now let's switch to a different terminal
+
+and group those config servers into a single replicated cluster so let's
+
+connect one of them using Mongo and run the RS dot initiate command with a list
+
+of all the config server members in our config server replication set ID now
+
+let's get to the second step in the process which is launching our actual
+
+MongoDB shards we're going to run two standalone shards in this example so
+
+let's create the directory for the first shard and call it shard 0 and the
+
+directory for the second shard which we'll call shard one once we have those
+
+two directories all we need to do is actually run those shards so let's run
+
+the first Mongo D instance but this time with the shard server parameter tell it
+
+to listen on port 2707 teen binded to localhost pointed to its own directory
+
+and restrict its oplog size to 128 just like we did in the previous lectures
+
+similarly we launched the second shard as a monk
+
+the instance with the shard server parameter in tell it to listen and port
+
+27 0 18 at this point we are missing the last component to glue everything
+
+together which is our Mongo s router so let's launch our Mongo s point it's
+
+config database location to the config server replication set which consists of
+
+our three config server nodes and also tell mongers to bind to localhost and
+
+listen on port 27 o 23 and that's it we now have all the components we have in
+
+our cluster architecture diagram running so the last step is to tell Mongo s
+
+about our two shards so let's connect to Mongo s using the Mongo client and add
+
+the first shard by running the SH dot add shard and then add the second shard
+
+in the same way now if we run the show DB s command while still connected to
+
+Mongo s we see that one of the databases we see is the config database that
+
+database is stored in the config servers and contains all the data in the
+
+configurations for our charts in the following step we're going to experiment
+
+with the balancing feature so we're going to change the maximum chunk size
+
+from the original 64 megabytes to one megabyte we don't really need to do it
+
+in production but this way we won't need to create too many documents to see the
+
+results so now that we got the technical part
+
+out of the way and launched our shard at MongoDB cluster let's go through a
+
+real-life use case to practice charting the use case we're going to explore is a
+
+video demand online streaming service let's assume we have a large library of
+
+movies a user can look up a movie by name or scroll through our library
+
+alphabetically and see all the information about each movie before they
+
+decide to watch it to provide such a service we're going to create a database
+
+and the database will have two collections the first collection will
+
+store all the information about our movies and the second collection will
+
+store all the information about our users our task is to shard those
+
+collections in a scalable way it would allow our business to grow and keep our
+
+users happy so let's start with the movies
+
+collection first here's an example document from our
+
+movies collection the document has a lot of fields like the movies name list of
+
+directors list of actors it's year when it was filmed as well as the rating so
+
+let's first create this collection in our database
+
+let's go back to our terminal where we're still connected to our Mongo s
+
+instance first we're going to create a video DB database and switch to it in a
+
+single command then we're going to enable sharding on that database which
+
+will allow us to shard collections within it now let's create the movies
+
+collection by inserting a few documents first let's insert one of my favorite
+
+movies Pulp Fiction by Quentin Tarantino and then insert another animation which
+
+I really like called Moana now as we can see our collection was successfully
+
+created and contains those two movies however by default this collection is
+
+not yet sharded and resides fully on one single shard so let's think about how
+
+we're going to Charlotte first of all we can see that one
+
+document can be quite big however we don't expect to have a lot of updates or
+
+rights to this collection instead we expect to have a lot of reads of two
+
+types one type is when a user knows which movie they want to watch so the
+
+query will contain the movies name the second type of Frida is for an
+
+alphabetic range when the user is scrolling through our movies library
+
+this leads us to two design decisions first of all we know that we want to
+
+share the movies collection by the movies name that is because if the
+
+sharding key is present in the query our Mongo s router will no wait sure to
+
+direct the query instead of broadcasting the query to all the shards the second
+
+decision is to shard the collection using the wrench based strategy this way
+
+if a query comes for the movies starting with the letter P
+
+they will much more likely to be on the same shard which will make our query
+
+very fast so let's go back to our terminal and
+
+start with creating an index for the name field in the movies collection
+
+which is a prerequisite to chart the collection on that key an index is a
+
+database structure that pre computes some data about a particular field in a
+
+collection ahead of time typically it pre sorts or pre hashes the documents
+
+based on the given field to make queries involving this field more efficient the
+
+index we just created priests or that our movies names and the one value means
+
+those names are pre sorted in an ascending order once we have the index
+
+for the field we want to shard on all we need to do is run the chart collection
+
+command with the full collection name in the field we want to shard on in this
+
+case one indicates that we are shard in using the ranged based strategy we can
+
+also now understand why the index was necessary as once we already pre sorted
+
+our name self abetik Lee and shard in them simply involves breaking the names
+
+into chunks but the names order stays the same to get more information about
+
+how our collection is sharded we can run the SH status command which will give us
+
+information not only about our movies collection but all the databases we will
+
+ignore most of the information here except for the shard section which
+
+confirms that we have two active shards in our cluster and our video DB database
+
+information located at the bottom in this section we see that our movies
+
+collection currently resides fully on shard 1 and contains one chunk which
+
+spends all the names from the minimum name value to the maximum name value now
+
+let's make it more interesting by adding a lot more documents into our collection
+
+for that I created a small java application ahead of time that simply
+
+connects to the shard at MongoDB cluster through Mongo s then once the connection
+
+is successful and we get the video DP database object because the generate
+
+movies method which will generate 10,000 movies and place them all in our movies
+
+collection so let's run this application and once it finished we should see
+
+10,000 new documents in our collection and a full rebalancing of our chunks
+
+among the two charts so let's switch back to our terminal and
+
+look at our new chunks distribution by running the status command again and as
+
+we can see since we said the maximum size for chunk is one megabyte in the
+
+beginning of the lecture and we definitely exceeded that threshold now
+
+we have 15 chunks of documents in our collection we can also see that the
+
+balancer plays seven of them in shard zero and the remaining eight on shard 1
+
+in addition we can see the exact range of names in each chunk and altogether
+
+the names are stored in an alphabetical order just like we expect so now if we
+
+were to query all the movies that starts at the letter F we will find all of them
+
+in the same shard and despite the fact that they spent three separate chunks
+
+and that's because we chose the range based sharding strategy for our names
+
+now let's look at the second collection in our database the users collection and
+
+see how we can shard it here's an example of a user document we
+
+may have in our system the user will have a username a list of watched movies
+
+that will be updated every time the user watches a new movie then we have the
+
+list of favorite movie genres that our system can guess and update based on the
+
+movies the user watched in the past and finally we have the month in the year
+
+when the user subscribe to our annual subscription plan so how should we share
+
+this collection first we notice that any time a user watches a new movie the user
+
+document gets updated so we expect to read and update existing users very
+
+frequently also as our service becomes more popular we'll have more and more
+
+unique users added to our collection so unlike our movies collection we expect
+
+our users collection to grow over time however any time we read update or add a
+
+new user were interested in that particular user only and other users are
+
+completely irrelevant this leads us to the decision to use the hash based
+
+sharding strategy since we don't need any group of users to be collocated on
+
+the same shard and in fact we want the users to be as evenly and randomly
+
+distributed among the shards as possible so that reads and writes can scale all
+
+across the cluster we can't really rely on a uniform distribution of user names
+
+since some names or letters are more popular than others
+
+but fortunately each document has a random ID that we get from MongoDB which
+
+is fairly uniformly distributed and is an excellent candidate for a sharding
+
+key of course we will need to refer to our user by ID for any user read or
+
+write operation to make our query efficient
+
+so let's go back to our Mongo which is still connected to our Mongo s instance
+
+and add some users into our users collection as we can see now we have two
+
+users with two randomly generated ideas of type object ID each object ID
+
+contains a 12 by tell you shown to us in a hexadecimal format so let's go ahead
+
+and share the users collection on that ID but this time using the hash sharding
+
+strategy now we need to create an index for the ID like before but this time
+
+we're going to create an index that pre hashes the values of our user IDs then
+
+once we have that index we shard the user's collection by ID using the hash
+
+strategy and if we run the status command we see that now we have one
+
+chunk of users it contains all our data and its range also spends all the keys
+
+at this point since we have only two documents in our collection now let's
+
+switch to our IDE and load another project that I created ahead of time
+
+just like what movies this project generates 10,000 users where each user
+
+contains a random username a random list of favorite movies genres and a list of
+
+watched movies as well as an integer representing the subscription month so
+
+let's run this program and generate 10,000 users and once the program is
+
+complete let's switch to our terminal and run the status command again to see
+
+our users chunks distribution across the charts as we can see at the beginning
+
+our documents were actually placed mostly on shard 1 which currently
+
+contains 15 chunks as opposed to shard 0 which contains only 5 chunks but our
+
+balancer is still working so let's run the status command again and now we see
+
+that in todo we already have 21 chunks which means we had a chunk split and
+
+shard 1 now has 14 chunks while shard 0 already has 9 so if we run the status
+
+command one more time we see that now the chunks are evenly
+
+distributed among the shards and we have already 23 chunks in total which means
+
+we had another two chunk splits since the last time we ran the status command
+
+also notice that what we see now is not the IDS themselves but their hashes
+
+which are simply 64-bit integers so our documents are now evenly distributed
+
+among all the shards based on the hash function that was applied on the user ID
+
+before we conclude this lecture let's consider a few directions where our
+
+production system can involve and how we can address those scenarios first as our
+
+service becomes more popular and we start getting more read queries for all
+
+the movies that means our load increases evenly on all the charts so one approach
+
+we can take is simply increase the number of charts this way the load on
+
+each shard will decrease and keep our distributed system stable
+
+another scenario which is a little more realistic is that our load increases but
+
+one or a few of our movies are way more popular than the rest and are getting a
+
+disproportionately large number of queries in this case adding more shards
+
+will not solve the problem as we have a clear hotspot in our data set so instead
+
+what we can do is increase the size of their replication set and in addition
+
+use the read preference secondary preferred this way we will spread the
+
+queries among all the nodes in the shards application set as they all
+
+contain the same data for that particular movie this approach will work
+
+well because our movies data doesn't change very often and we don't need to
+
+guarantee straight consistency in this use case
+
+when it comes to scale in our users collection it is actually a lot simpler
+
+if the number of users keeps increasing and we're getting more logins from
+
+existing users and signups from new users we can simply increase the number
+
+of charts and since our user IDs are uniformly distributed we are guaranteed
+
+to not have any hot spots in our distributed database
+
+in this lecture we brought together all our theoretical and practical knowledge
+
+about scale in a database in MongoDB in particular we launched a distributed
+
+MongoDB cluster with multiple shards among us router and a fully replicated
+
+set of config servers we also went through the entire process of deciding
+
+on the sharding strategy as well as the shard in key based on the use case then
+
+we implemented our shard in decisions in practice and put our cluster to the test
+
+by inserting a large number of documents in each of the database collections
+
+finally we laid out a plan to address some of the scenarios that our system
+
+can evolve to us as our service becomes successful in our distributed system and
+
+needs to serve more users and takes more load
+
+thank you and I will see you in the next lecture

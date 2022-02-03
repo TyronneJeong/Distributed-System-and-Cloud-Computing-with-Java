@@ -1,0 +1,233 @@
+hey guys welcome back in this lecture we'll talk about
+
+Watchers and triggers and how we can use them to implement failure detection with
+
+the zookeeper library we will talk about a phenomenon called the herd effect
+
+something we will generally try to avoid in our distributed system and finally
+
+with all those tools at hand we'll be able to finish our leader election
+
+algorithm and make it robust and resilient to any failures so let's start
+
+talking about Watchers and triggers when we call methods like get children
+
+get Deena or exists zookeeper allows us to pass a reference to a watcher object
+
+the watcher is an object to register with zookeeper to get a notification
+
+event when a change happens if we pass a watcher to the get children method that
+
+returns us a list of children Z nodes of a particular Z node we will get modified
+
+next time the list of those children changes exists tells us if a Z node in a
+
+particular path is present if we pass a watcher we can get notified if for
+
+example a Z node gets deleted or created in a particular path yet data gives us
+
+the data stored inside a Z node and a watcher will notify us if that data gets
+
+modified in fact we already use The Watcher when
+
+we created the zookeeper object and handle the connection and disconnection
+
+events the difference between this watcher and the watcher we pass with the
+
+get children exists and to get data methods is that when we register a
+
+watcher with those methods we get a one time trigger in other words we get
+
+modified only once when a change happens so if we want to get modified for future
+
+similar events we need to register a watcher again let's have a quick demo of
+
+how to use Watchers we start with the typical setup with the connect -
+
+zookeeper method where we connect a zookeeper and the run and close methods
+
+to suspend the main thread and close the resources when we're done also notice
+
+that our Watchers demo class is implementing the watcher interface so we
+
+can use this class to watch for events the process method is where we will add
+
+all the handlers to the events we subscribe to
+
+just like the connection and disconnection state changes events we
+
+receive from zookeeper so let's add the target z node name we're going to watch
+
+in this demo and let's create the watch target z node method where we will
+
+register our watcher for the particular events
+
+the first events we are going to register for is the creation and
+
+deletion of the target Z node so let's call the zookeeper exists method and
+
+pass the current object as The Watcher exists returns an object of type stat
+
+which gives us all the metadata about the Z node such as its creation and
+
+modification time number of children and so on
+
+and if the xeno doesn't exist yet a return value is going to be now in that
+
+case we'll simply return from the method if the xeno does already exist then we
+
+will call the zookeeper getdata method to both get the current data in the Z
+
+node and register a watcher on any changes in that data also we will call
+
+the already familiar to us get children method which in this case will not only
+
+give us the list of children of the target Z node but also register us to
+
+events about any changes in that list and finally let's print out all that
+
+information to the console
+
+now let's go to the process method and handle each event we subscribe to one by
+
+one first in the exists method we registered for the creation and deletion
+
+events so let's create a case for the no deleted event and print out an
+
+appropriate message in the node created event with an appropriate message as
+
+well
+
+in the getdata method we're registered for any changes in the xenos data so
+
+let's add a handler for the no data changed event
+
+and lastly in the get children method were registered for changes in the list
+
+of children of the target Z node so let's handle the node children changed
+
+event as well in the end we will call the watch target
+
+Z node method for two purposes the first reason to call it is to get
+
+all the up-to-date data after the changes and print it to the screen and
+
+the second reason is as we mentioned all the events are one-time triggers so if
+
+we are interested in the same events again we need two rear edge astir them
+
+by calling their corresponding methods and that's it now let's go ahead and
+
+start the application and bring the terminal window to launch the zookeeper
+
+client as we can see our application successfully connected to zookeeper and
+
+we have nothing yet since we haven't created the target Z node so let's
+
+create a target Z node with some test data in it and we can see that we got
+
+the node created event and read the data in that Z node now let's modify the data
+
+in that Z node by calling the set command and pass some new data into it
+
+and we can see that we got notified about a node data changed event and we
+
+successfully read the new data from the Z node now if we create a child Z node
+
+under the target Z node will received a no children changed event and finally
+
+when we call the recursive rmr command to remove the target z node and all its
+
+children we get two events the first event is about the change in the list of
+
+children of the target Z node and the last one is the no deleted event
+
+corresponding to the deletion of the target z node so now that we know how to
+
+use Watchers and triggers let's see how we can use those to detect and act upon
+
+failures in the cluster let's say we have two nodes each of those cluster
+
+nodes creates an ephemeral Z node with the zookeeper cluster node one cause
+
+exists on Z node 2 and node two cause exists on Z node one both of them
+
+register a watcher on the corresponding Z nodes
+
+now if cluster node 1 for example disconnects or dies its ephemeral Z node
+
+will be deleted by zookeeper so zookeeper will send a notification to
+
+cluster node 2 using that watcher and tell the node that Z node 1 was deleted
+
+which in turn tells no to that node 1 is done this way we can get notified and
+
+take action if another node in the cluster had a failure so if we take that
+
+approach and apply it to the leader election algorithm one obvious solution
+
+for the leader re-election in a cluster can be as follows once the leader
+
+election is completed all nodes that are not the leaders can start watching the
+
+leader if the leader dies and it's Z node gets deleted then all the nodes in
+
+the cluster will get notified and they can start the reelection of a new leader
+
+the solution will work but it is not optimal as it suffers from something
+
+called a herd effect the herd effect is a problem when a lot of nodes are
+
+waiting for an event to occur when that event occurs they all get modified and
+
+wake up now even though they all wake up and try to accomplish something only one
+
+node can succeed this type of phenomenon indicates a bad design as it can very
+
+negatively impact the performance and even entirely freeze our cluster
+
+in our case if a leader dies the small zookeeper cluster will have to notify a
+
+potentially large cluster of nodes then all the nodes are going to call the get
+
+children method to get a new view of the Z nodes hierarchy so they will all
+
+bombard zookeeper with requests all in the same time after the leader is
+
+reelected all the nodes are going to start watching the Z node of the leader
+
+so they will also send a lot of requests to zookeeper simultaneously with a large
+
+number of nodes in a cluster this can really overwhelmed Sukie per so we
+
+should avoid this type of design as much as possible so the alternative approach
+
+we're going to take for the leader reelection strategy is as follows
+
+after the initial leader election instead of all the nodes watching the
+
+leaders II node each node is going to watch only the Z no that comes right
+
+before it in the sequence of candidate Z nodes this way if the leader dies the
+
+only node that is going to be notified is its immediate successor that node
+
+will need to call get children again to make sure that it owns the Z node with
+
+the smaller sequence number and in that case it knows that it's the new leader
+
+in this lecture we'll learn about Watchers and triggers and how we can use
+
+this type of subscription event-driven software architecture to detect failures
+
+in a cluster we'll learn about the herd effect why it's bad for a distributed
+
+system and how we can avoid it and finally we came up with a game plan on
+
+how to finish our leader election algorithm and implement a robust and
+
+scalable re-election mechanism in the next lecture we'll finish the
+
+implementation of the leader election algorithm with that new addition and
+
+we'll put that new algorithm to the test I will see you soon in the next lecture

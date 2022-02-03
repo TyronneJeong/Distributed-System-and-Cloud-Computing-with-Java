@@ -1,0 +1,161 @@
+welcome back in this lecture we will first talk a bit about data partitioning
+
+and the role it plays in the scalability of a distributed algorithm then we will
+
+take our original tf-idf algorithm and break it into independent
+
+parallelizable components finally we will come up with a detailed system
+
+architecture which we will implement in the following lecture so let's talk
+
+briefly about data partitioning we can express the tf-idf algorithm as a
+
+sequential double nested loop notice that we have in fact two major
+
+dimensions to our problem the number of documents and the number of search terms
+
+once we identify the dimensions in our problem we need to make a decision on
+
+which dimension we're going to partition our data among the nodes so since we
+
+have the search terms on one hand and the documents on the other hand we can
+
+split the work only on one of those dimensions we can either partition the
+
+problem by terms giving each node a subset of the search terms and all the
+
+documents are going to be shared or we can partition the data by documents
+
+giving each node a subset of the documents in our repository and all the
+
+search terms are going to be shared by all nodes
+
+this decision on how to break our workload and plays a key role in
+
+determining if our algorithm implementation will scale horizontally
+
+or choke as soon as the data set grows to make the right engineering decision
+
+we need to ask ourselves on which dimension we expect the input our system
+
+to grow over time this way when the data in that dimension does grow we can
+
+simply add more machines into the problem and the system will easily scale
+
+so let's identify that dimension do we expect the size of the quarry to grow
+
+significantly over time the answer is probably not the number of terms is
+
+typically within the boundaries of a sentence or a few sentences at most and
+
+what about the documents do we expect them to grow over time and the answer is
+
+yes absolutely in fact the more documents we have the
+
+better our search results are going to be so that I mentioned we're going to
+
+partition the algorithm is going to be on the document one thing to remember is
+
+this is an engineering problem and the answer depends on the use case and can
+
+even change over time now let's go back to our tf-idf
+
+algorithm and see how we can parallelize it to run in a cluster
+
+we see that to calculate each document score we need to compute two components
+
+the term frequency and the inverse document frequency we can easily
+
+calculate the term frequency in parallel by different nodes as each term
+
+frequency it depends on the term and the words in one particular document and
+
+that's great news for us since scanning through all the words in each document
+
+is the most intensive operation unfortunately the IDF cannot be
+
+calculated in parallel by different notes and that's because to calculate
+
+the inverse document frequency for each given node we need the information from
+
+all the documents in the repository so the parallel algorithm is going to be as
+
+follows the leader will take the documents and
+
+split them evenly among the notes then the leader will send a task to each node
+
+it contains all the terms and the subset of documents allocated to that
+
+particular node each node that will create a map for each document allocated
+
+to it each of those maps will map from a search term to its term frequency in
+
+that particular document that map is exactly the document data class we
+
+defined in our original implementation then each node will aggregate all the
+
+document data objects for all its allocated documents and send the results
+
+back to the leader at this point the leader will have all the term
+
+frequencies for all the terms in all the documents at the final aggregation step
+
+the leader will calculate the IDF for all the terms which is easy to derive
+
+from the term frequencies finally it will score the documents and sort them
+
+in descending order don't worry if not everything is a
+
+hundred percent clear at this point as once we write the actual code and all
+
+the pieces will come together pretty naturally
+
+so now that we have a good direction on how to implement the parallel algorithm
+
+let's define our system architecture in detail
+
+first of all we have our cluster of search nodes in the front-end server
+
+then using zookeeper we elect a leader to act as a coordinator once the roles
+
+are assigned the worker nodes will register themselves with the zookeeper
+
+based service registry and the leader will pull those addresses so it can send
+
+tasks to those worker nodes also the leader will register itself to a
+
+different Z node in the service registry and to allow the front-end server to
+
+find his address once the search query comes as an input to our system the
+
+front-end server will look up the search coordinators address in the service
+
+registry and forward the search query to the search coordinator once the
+
+coordinator receives the search query it will inspect all the currently available
+
+workers and send the tasks through HTTP to all the worker nodes once a node gets
+
+its allocated set of documents it will read them from the document repository
+
+and perform the calculation and send the results back to the leader when the
+
+leader gets all the results it will perform the final aggregation scoring
+
+and sorting and send the results back to the upstream system
+
+in this lecture learn about the considerations of breaking an algorithm
+
+to run in parallel in a distributed system we define what part of the
+
+algorithm will be calculated by which type of node in the system as well as
+
+the messages that will be passed between the nodes
+
+finally this time we came up with a detailed system design where we can
+
+combine everything we've learned so far in the course into a single distributed
+
+system so in the next lecture we'll get down to business and start implementing
+
+the system in practice see you all soon

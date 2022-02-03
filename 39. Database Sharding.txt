@@ -1,0 +1,177 @@
+welcome back in this lecture we'll learn how to scale a database through a
+
+technique called sharding we'll learn about different sharding strategies and
+
+also talk about a few ways to shard both a sequel and a non sequel database and
+
+finally we'll discuss some of the challenges and disadvantages that come
+
+with shard in our data so what is sharding
+
+sharding is partitioning off a large dataset into multiple smaller and more
+
+manageable chunks called charts using shardene we can split our large database
+
+into smaller pieces that can live on different machines
+
+thanks to sharding each database instance can provide lower latency as it
+
+can fit all its data in memory also it can provide higher throughput through
+
+parallelism when data transactions operate on data on different charts
+
+through shardene we can scale a database horizontally by adding more and more
+
+database instances as the amount of data increases we can also provide higher
+
+availability since if one of the database instances goes down other
+
+shards remain unaffected and are available for clients to read and write
+
+to in a sequel database we can char the
+
+database in two ways we can shard it vertically by splitting the table into
+
+smaller chunks that contain fewer columns but a generally more scalable
+
+and adaptive way to shard table is splitting the table records into
+
+separate chunks each containing a subset of the records
+
+shardene in a no sequel database is even simpler we simply divide the already
+
+disjoint records into groups and place each group in a different chart
+
+in either case each chunk of Records can now live on a different database
+
+instance called shard and each database shard can potentially contain multiple
+
+chunks of Records sharding is typically done based on the
+
+records key based on the records key we can know in what shard to find an
+
+existing record and in what chart to add a new record so what are some of the
+
+sharding strategies we can use one strategy we can use is the hash based
+
+sharding where we apply a hash function on the records key the hash function
+
+generates a numeric value which determines which shard the record
+
+belongs to for example if we take the key is the
+
+records user ID and we have n database charts in our database cluster we can
+
+simply apply the modular function to determine where to place the records
+
+with that key for N equals 3 and user ad 1000 the record will go to shard number
+
+1 for user ID a thousand and 1 the record will go to shard number 2 and for
+
+user ID a thousand and two the record will go to shard number zero
+
+the advantage of the hash-based sharding strategy is that for monotonically
+
+increasing keys and a good hash function we can achieve an even distribution of
+
+the records among the database charts the disadvantage is that keys with
+
+closed values will likely not fall in the same Sharda so range based queries
+
+will have to spend multiple charts as we can see in our example three
+
+consecutive user IDs it will end up in different charts
+
+another common strategy is range based sharding in this strategy we divide our
+
+key space into multiple continuous ranges in this strategy records worth
+
+nearby Keys will more likely end up on the same shard which will make range
+
+based queries a lot more efficient for example if we take the user stable and
+
+this time we pick the name is the sharding key we can allocate an
+
+alphabetic range to each shard and records with names the start with the
+
+same or close by letter will end up in the same shard
+
+similarly we could shart by the users date of birth or country if the ranch
+
+queries that normally run are more relevant to those attributes the
+
+disadvantage of French based sharding is if our key space is more clustered in
+
+certain ranges we will not get an even data distribution among our charts so we
+
+might need to readjust our ranges on a continuous basis to guarantee good data
+
+distribution within our distributed database
+
+so now that we know a few ways we can scale our distributed database through
+
+sharding let's look at some of the challenges and disadvantages that come
+
+with charlene a database the biggest disadvantage is that operations that
+
+involve records that reside on different shards now become much more complex
+
+concurrency control that prevents race conditions and ensures data consistency
+
+also becomes much harder and expensive than what we had in a centralized
+
+database for example a transaction on a single table in a centralized relational
+
+database was really easy well the data is available in a single location so
+
+concurrency control on a single table update or even a multi table join simply
+
+boils down to acquire in local locks within a single process in a sharded
+
+database where the same table can be shard at across multiple machines simple
+
+queries become distributed transactions or we need to potentially acquire a
+
+distributed lock which is a lot more complicated error-prone and has a much
+
+higher performance penalty for that reason some of the distributed
+
+relational databases do not even support automated charting and are generally a
+
+lot harder to scale that's one of the reasons for the rise in popularity for
+
+no sequel databases like dynamodb Cassandra MongoDB Redis and others which
+
+are not designed for complex multi record queries like sequel databases and
+
+as being such do not even attempt to guarantee the same atomicity consistency
+
+isolation and durability like a typical sequel database would
+
+some no sequel databases guarantee atomic operations involving multiple
+
+records only if they reside on the same physical note some no sequel databases
+
+don't guarantee strict consistency which means updates to records will not be
+
+seen immediately and some don't even guarantee atomicity of operations on
+
+multiple records at all so no sequel databases are a lot easier to shard and
+
+scale but designing a system with such databases especially if it was initially
+
+designed for a relational database becomes a big challenge in this lecture
+
+we'll learn about a technique called sharding which helps us scale a large
+
+database across multiple nodes we'll learn how to char the table in a sequel
+
+database both vertically and horizontally and also learn a few
+
+sharding strategies like the hash and the wrench based sharding finally we
+
+talked about the challenges and disadvantages of sharding and how it may
+
+impact our design choices for a distributed system
+
+see you guys in the next lecture

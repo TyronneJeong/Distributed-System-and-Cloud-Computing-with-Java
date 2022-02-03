@@ -1,0 +1,213 @@
+welcome back in this lecture we will talk about message delivery semantics in
+
+distributed systems we will discuss the possible ways that a simple request
+
+response transaction can fail in the different contracts that the client and
+
+server can agree on to achieve correct and predictable behavior so let's start
+
+with a few possible scenarios at which a server can fail during an HTTP
+
+transaction let's assume that the client sends a request to the server to perform
+
+some computation or action when the server receives the request it can
+
+execute the action by maybe talking to other services right into a database and
+
+eventually sends a response to the client acknowledging that the action was
+
+successfully performed but unlike a method invocation in an application
+
+running on a single machine many things can happen after the client sent a
+
+request and are outside of the clients control first we have the successful
+
+scenario where the server receives the request execute the action and response
+
+to the client another scenario can start well with the server receiving the
+
+request successfully executing the action but - right before it responds to
+
+the client the network communication breaks and the
+
+client never receives the acknowledgement that the action was
+
+successfully performed another scenario can be a server crash right after the
+
+execution of the request or a server crash right before the request execution
+
+happens finally it's also possible that the server never even received the
+
+request in the first place unfortunately from the client
+
+perspective all those scenarios look exactly the same and it doesn't have any
+
+way of knowing whether the server executed the action or did not
+
+now let's imagine we're running an online store our order service received
+
+a purchase request from the user and is sending a request to the billing service
+
+to withdraw money from the users bank account but after the order service
+
+center requested the billing service the order service never received any
+
+response so now what should we do should we send the request again and
+
+potentially build a user twice or should we not send the request to the billing
+
+service again and potentially not build a user at all and lose money since such
+
+failure scenarios are very common in distributed systems we need to agree on
+
+the delivery semantics between the client and the server ahead of time this
+
+way we avoid having a dilemma or in either way we may end up with incorrect
+
+behavior in our system of course what we really want is the exactly once delivery
+
+semantics but that is extremely complex and sometimes impossible to achieve
+
+so the first delivery semantics we're going to talk about is the at most once
+
+in this semantics the client will send a request to the server only once
+
+if the server never received a request from the client or it crashes right
+
+before it sends the response the client will never read Olivia quest to the
+
+server so in this message delivery semantics in
+
+the worst case the desired action may never get performed by the server and in
+
+the best case it will never be performed more than once
+
+some common use cases for the at most one semantics are messages to a logging
+
+or a monitoring service in most cases it's probably okay to occasionally lose
+
+a log line or a performance metric and it's not worth for delivering those
+
+messages another use case can be sending a promotional email or a notification to
+
+a user if the user never receives it there is no harm done but if the user
+
+receives multiple notifications to their phone about the same promotion the user
+
+may feel like they're getting spammed and unsubscribe out of frustration the
+
+second delivery semantics is the at least once in this redelivery semantics
+
+we agree between the client and the server that if the client does not
+
+receive a response from the server the client will keep presenting the request
+
+until it gets a response of course if the server already performed the
+
+requested action would simply fail to respond to the client we will end up
+
+with performing the requested operation multiple times the semantics works well
+
+only for idempotent operations let's have a short recap on what an
+
+idempotent operation is an idempotent operation is an operation
+
+that can be performed multiple times and would have the same result or the same
+
+effect as if it was performed only once examples of item pointing operations can
+
+be reading the first line of a file updating the status of a user to active
+
+or deleting a record by its ID these operations are completely safe to
+
+perform using the at least one semantics and that because if you perform either
+
+of them more than once will have the exact same result
+
+some examples of non idempotent operations are appending a line to a
+
+file incrementing a metric in a database or withdrawing money from the users
+
+account either of those operations are unsafe to perform using the at least one
+
+semantics since performing them multiple times will have an adverse and undesired
+
+effect to our system so what do we do when our operation is
+
+not idempotent but losing the message by using the at most one semantics is out
+
+of the question in this particular case we may have to try to make an idempotent
+
+operation idempotent artificially for example in the user billing scenario
+
+the order service can generate an increasing key for every new billing
+
+request that key can be sent with every request together with a boolean value
+
+telling the billing service whether the current request is a retry or not the
+
+sequence number will be stored in a database as one transaction with the
+
+actual update of the users account with the new balance now if a request is sent
+
+to the billing service in the billing service fails to respond then the order
+
+service will send a retry request with the same sequence key as in the original
+
+request in addition it will also set the is retry field to true to let the
+
+billing service know that it is a retry now when the billing service receives
+
+this message it knows that it first needs to check which sequence key is
+
+recorded in the database from the last operation if the sequence key recorded
+
+in a database is different from the one in the request that means that the
+
+billing service did not actually successfully perform the first attempt
+
+of this request so the billing server will perform the account update and
+
+record the new sequence key in a single operation or transaction to avoid any
+
+race conditions in the end the billing service will respond to the order
+
+service to complete the HTTP transaction another scenario of this retry operation
+
+is if the sequence key read from the database is actually the same as the
+
+sequence key sent with the retry request that means that the initial request to
+
+update the user's account was actually processed successfully and recorded in
+
+the database but the billing service simply failed to respond to the order
+
+service to confirm the operation so in this case the billing service doesn't
+
+need to do anything and simply respond to the order servers to acknowledge the
+
+request one thing I want to point out is making
+
+some non item point operations idempotent is harder than others and in
+
+some cases it's even impossible which might force us to rethink our entire
+
+system this complexity is an inevitable price we need to pay for having a
+
+loosely coupled and scalable distributed system
+
+in this lecture we discussed the different scenarios in which a simple
+
+exchange of messages between a client and a server can fail we talked about
+
+the at most once and the at least once delivery semantics did the two services
+
+can agree on we talked about idempotent and non unimportant
+
+operations and finally we walk through a full example of an inherently non item
+
+point operation and how we made it artificially idempotent by augmenting it
+
+with a monotonically increasing sequence number generated by the client
+
+I will see you soon in the next lecture

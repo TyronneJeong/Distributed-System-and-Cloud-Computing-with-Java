@@ -1,0 +1,264 @@
+hey welcome back to another lecture on distributed search in this lecture we'll
+
+start the implementation of the distribute search we will build a
+
+distributed system in a bottom-up approach and in this lecture we will
+
+focus on the search cluster worker nodes we will start with identifying the
+
+components we need for this part of the system and then we'll go ahead and
+
+implement them in practice so let's make a list of all the software components we
+
+will require and see what parts we can reuse from the previous lectures and
+
+what parts we need to implement from scratch
+
+if we zoom into our architecture diagram and look just in the search cluster we
+
+see that the worker nodes interact with the following systems the documents
+
+repository the search coordinator which will give the worker nodes their tasks
+
+and the zookeeper based service registry where the coordinator will find the
+
+workers addresses we already know how to register our
+
+address to a service registry in reading documents from a file system is a
+
+trivial task so our main focus is going to be the communication between the
+
+search coordinator and the workers and execution of the workers part in the
+
+tf-idf algorithm on the given documents the worker nodes and the coordinator are
+
+essentially the same application living in one single codebase and the only
+
+difference is the rolled application instance is assigned in runtime
+
+depending on the leader election so we'll take the simple approach of using
+
+the standard Java serialization for exchanging the data between the worker
+
+nodes and the surge coordinator so now that we know exactly what we need
+
+to build let's jump to the code and start the implementation
+
+we're starting with a project that contains a few classes that we already
+
+implemented in previous lectures we obviously have the tf-idf class that
+
+we're going to use to do the document search the application class is the
+
+starting point for both the worker and the coordinator notes in the
+
+applications main method will first take the HTTP servers port from the command
+
+line or use the default then we connect to zookeeper and pass it to the worker
+
+service registry which now in addition to taking the zookeepers instance is
+
+also taking the Z nodes name as an argument
+
+this way we can separate the worker service registry from the coordinator
+
+service registry we will create in the next lecture after that we instantiate
+
+the own election action Kovach instance that takes the worker service registry
+
+and the HTTP server port the leader election algorithm takes this koubek
+
+implementation to call the appropriate code depending on the algorithms outcome
+
+inside the leader election class the own elected to be leader callback method is
+
+called if the instance of the application is elected to be the
+
+coordinator for a search cluster otherwise the algorithm calls the own
+
+worker callback that own election action class that implements the own elected to
+
+be leader in the own worker methods is the place where depending on the role of
+
+this particular instance we instantiate all the components necessary for this
+
+node to perform its role to decouple our web server which is concerned with
+
+handling HTTP requests and responses and our search logic
+
+we'll use this on request callback interface a class implementing this
+
+interface will have to implement the handle request method which takes an
+
+HTTP request message body and returns are ready to be sent HTTP response body
+
+byte array it will also implement the get endpoint method which will return
+
+the path to our HTTP server end point the web server will take an instance of
+
+the on request call back into its constructor on start time it will
+
+register the end point by calling the get end point method and handle each
+
+incoming request by calling the owner Kohlberg's handle request method the
+
+input to this method comes directly from the HTTP request body and the return
+
+value from the method is passed to the send response method which will send
+
+their response back to the caller since we are going to exchange complex data
+
+objects between the coordinator in the search worker will need the
+
+serialization utils class which just has all the boilerplate code for serializing
+
+a Java object into a byte array we can send over the network and the
+
+deserialize method which DC realises a byte array we received from the network
+
+into a Java object we can easily work with this code should be familiar to you
+
+from the lecture on the complex data object serialization so now that we
+
+understand our setup let's start adding all the components we need for the
+
+worker node first of all inside the model we have the document data class
+
+which represents the mapping between each given search term to its term
+
+frequency inside a given document we will have to send instances of this
+
+class for each document allocated to the worker so we need to make it
+
+serializable by implementing the serializable interface then inside the
+
+model package we'll create a task class which represents a search tasks sent to
+
+the worker node from the search cluster coordinator the class will contain a
+
+list of search terms in a subset of documents allocated to this particular
+
+worker node will also add a convenient constructor to take those lists as well
+
+as to gather methods that return an immutable unmodifiable reference to our
+
+search terms and the list of documents this class will also have to go through
+
+the network so we will make it serializable as well the last data model
+
+we need to define is the result class which contains a mapping between every
+
+document allocated to our worker node to the document data object that was
+
+calculated by the tf-idf algorithm will also add a method to add a document data
+
+into the internal map and a method to get an immutable referenced or internal
+
+mapping and of course objects of this class will also have to be sent over the
+
+network so we'll mark it as serial as well now let's create the search
+
+worker class which will implement the actual work the search worker node needs
+
+to perform a class we'll implement the own request callback so it can be passed
+
+or web server instance at the top of the class let's define the HTTP relative
+
+path for worker nodes web server and return it in the get endpoint method in
+
+the handler request method we'll first have to be serialize an incoming request
+
+payload into a Java task instance then we will create a result object by
+
+calling the create result method which we'll implement in a moment and finally
+
+we'll take the result object and serialize it back to a byte array that
+
+the web server can put into an HTTP response body and send it over the
+
+network the create result method now has to deal with only pure Java objects and
+
+not concern itself with any HTTP internals it will first read the
+
+document paths then just for debugging purposes we'll print out the number of
+
+documents this worker node received in a task message after that we create an
+
+empty result object and iterate over all the document paths we just read from the
+
+message for every document we read all the words in that document from the
+
+document repository by calling the parse words from document method which we'll
+
+implement in a second then we calculate the document data object for this
+
+document by calling the tf-idf skree a document data method which takes all the
+
+words in that given document in the search terms we can add that document
+
+data object into a result object and when we're done calculating the term
+
+frequencies for all the search terms in all the documents that were allocated to
+
+us we return the result object back from the method the last somewhat trivial
+
+method we need to implement is the parse words from document which takes the path
+
+to our document and returns a list of words so we start with creating a file
+
+reader object then we create the bufferedreader object from the file
+
+reader after that we read all the lines from the file
+
+and pass those lines into the convenient method we implemented in the tf-idf
+
+class that breaks those lines into individual words in the end we simply
+
+return the list of words back to the caller and if there was an error reading
+
+from the file we simply return an empty list and that's it we now have all the
+
+search worker notes logic ready so we go back to the on election action class and
+
+in the on worker method we create the search worker object then we create an
+
+instance of a web server which takes the port to listen on and the search worker
+
+instance to handle the HTTP requests and finally we start the web server
+
+let's also modify the address of our worker node it will register with the
+
+worker service registry this will reflect the correct end point our worker
+
+node will expect to receive the search tasks and that's it our worker nodes
+
+logic is now ready so now that we implemented all the
+
+components we need for the search worker to handle its incoming tasks calculating
+
+all the term frequencies for all the search terms in each allocated document
+
+and the logic to send the results back to the coordinator we are now ready to
+
+take on the next part of the distributed system and implement the logic for the
+
+search cluster coordinator to receive search queries from the front end server
+
+and perform the search aggregation scoring of the documents and sorting
+
+them by relevance before we move to the next task let's quickly summarize what
+
+we accomplished in this lecture in this lecture we implemented the first part of
+
+our complete end-to-end distributed system we focused on the search cluster
+
+worker node and we're able to reuse the leader election service registry
+
+everything will learn about HTTP data serialization and tf-idf just in this
+
+part of the distributed system so in the next lecture we will continue where we
+
+left off and move to the implementation of the search coordinator in the
+
+distributed search cluster see you soon in the next lecture
+

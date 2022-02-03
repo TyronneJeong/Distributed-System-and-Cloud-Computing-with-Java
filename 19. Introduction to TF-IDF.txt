@@ -1,0 +1,259 @@
+hey guys welcome back to another lecture now we're ready to start building our
+
+first complete distributed system in this lecture we'll formalize the
+
+algorithm we will use to solve our problem and define the systems
+
+architecture we will need to achieve the system's goal the system we're going to
+
+build is a distributed search in a typical search problem is an input
+
+to our system ahead of time we have a large set of documents which can be
+
+books academic articles legal documents or websites a user then provides us with
+
+a search query in real time to get the most relevant documents or links to
+
+their search based on that search query we want to identify which documents are
+
+more relevant and which are less relevant and present all those results
+
+to the user more concretely we want to sort or rank the documents we have in
+
+our repository by their relevance and based on the terms or words in the
+
+search query that the user provided for example if a user gives us the
+
+search query very fast cars a logical list of documents we may show to the
+
+user would have an article about Formula One tournaments and maybe an article
+
+about the fastest new cars of the year and at the bottom of the list we will
+
+have less relevant articles like the top ten recipes for a chocolate cake which
+
+is clearly not relevant to the search query at all so given those documents in
+
+a search query how are we going to decide which documents are more relevant
+
+the simplest approach we can take is a simple word count of our search terms we
+
+can simply count how many times each search term from the query appears in
+
+each document then documents where the search terms appear many times will rank
+
+high in relevance and documents where the search terms don't appear as much
+
+will rank lower more formally if we break the search query into search terms
+
+which are just words in our case we can assign each document a score which would
+
+be the sum of each terms count in that particular document so for example for
+
+the search terms very fast cars if in the particular document the word very
+
+appears 20 times the word fast appears 10 times and the word cars appears 30
+
+times then the score is simply going to be 60 in the end we can simply sort the
+
+documents by the score in a descending order and present that sorted list to
+
+the user this naive algorithm however has a major
+
+flaw it unfairly favors larger documents with more words in them for example if
+
+our search term is car we may have a short article about racing cars where
+
+the word car appears very often and in the same time we may have another very
+
+long book about something completely irrelevant
+
+however Cheers because that book is long the search term can still appear more
+
+times overall than in the short article so in that case the long and irrelevant
+
+book will score higher than the clearly more relevant article about racing cars
+
+so another approach we can take is to take the number of times the search term
+
+appears in the document and divided by the total number of words in that
+
+particular document which gives us the relative term frequency in each document
+
+instead of just a row count if we apply that approach in this case we clearly
+
+see that the word car appears every 10 words in the short article about cars
+
+whereas in the irrelevant long document the word car constitutes only about 0.01
+
+percent which means it appears only about every eight thousand words
+
+so the natural next attempt to score documents is by calculating the term
+
+frequency of each term in that document and then sum all the term frequencies to
+
+get the total document score then we'll repeat that process for every document
+
+in the repository and after sorting the documents by score we have what we're
+
+looking for now this is much better than what we had before but we still have a
+
+major problem with this approach let's take the fast car as an example of
+
+a search query the user is clearly interested in documents about cars and
+
+in particular fast cars humans can clearly understand that the most
+
+important term here is a car however unfortunately computers are not as
+
+perceptive and based on our algorithm our document scores will be incorrectly
+
+skewed towards documents that have the common and less important word the more
+
+frequently the reason for the problem is that our terms are equally weighted in
+
+the algorithm but are in fact not equal in their importance for the search
+
+that leads us to a very common algorithm information retrieval in text mining
+
+called term frequency inverse document frequency or tf-idf in short the
+
+algorithm looks at every word in the search query and measures how much
+
+information each word provides us if the word is very common across all documents
+
+then having in the search query is not providing us any value so it would get a
+
+lower weight in our scoring formula on the other hand words that are more rare
+
+across all documents get a higher weight the idea and the algorithm is to
+
+calculate the term frequency for each term in the document just like before
+
+but also multiply each term frequency by the inverse document frequency of that
+
+term across all the documents which acts as the weight we give to each search
+
+term the inverse document frequency is calculated by simply taking the total
+
+number of documents and dividing it by the number of documents that contain
+
+that particular term then we take a log base ten of that ratio and we get the
+
+IDF for that particular search term so for example if we want to calculate
+
+the inverse document frequency of the word there and we have ten documents in
+
+our repository given that the term des appears in all of them which is quite
+
+likely we will get the IDF of zero so now if we bring that result back to the
+
+score calculation for each document we see that because the word D appears in
+
+all the documents it weighs down its term frequency to zero now if the word
+
+car appears only in one document and the word fast appears in five of the
+
+documents then we can see that the weight of the more rare term car is the
+
+highest so if we take those numbers back to the
+
+score calculation for each document we see that the more important terms are
+
+weighted higher and the terms that appear everywhere will be simply ignored
+
+now we repeat that process to calculate the score for every document in our
+
+collection and in the end we sort the documents by the score in a descending
+
+order and get the list of documents sorted by their relevance based on the
+
+search query provided by the user a few important notes and observations
+
+about the algorithm first of all the tf--idf
+
+is a statistical algorithm and to produce meaningful results it's better
+
+to have a larger set of documents for example if we take the original example
+
+of the search for car and we have only two documents both of which containing
+
+the word car then the inverse document frequency of that term is going to be
+
+zero so we would have no idea which of those documents is more relevant however
+
+if we have 100 documents and those same two documents are still the only ones
+
+containing the word car then the inverse document frequency of that term is not
+
+going to be zero so now the term frequency in each document will help us
+
+determine that the short article about cars is more relevant than the long book
+
+about food because this algorithm works better with
+
+a high number of documents and is highly parallelizable it is a perfect algorithm
+
+for us to implement our first entire distributed system
+
+so let's come up with a general direction we're going to take and
+
+execute on it in the next lectures as always we start with a number of nodes
+
+in the cluster the documents are going to be stored in a shared location
+
+accessible to all nodes that can be a distributed database file system or they
+
+can be simply replicated across all the nodes when the cluster comes to life we
+
+perform our typical leader election which we implemented and perfected in
+
+the previous lectures the leader then becomes the coordinator for the entire
+
+search algorithm when the leader receives the search query from the user
+
+it will count how many documents we have in the shared storage and divided the
+
+work accordingly among the worker nodes the nodes would then calculate the term
+
+frequency for each term and in each document allocated to them and pass that
+
+data back to the leader through the network the leader then would calculate
+
+the final scores for each document and would send a sorted list of the
+
+documents back to the user how are we going to paralyze the search algorithm
+
+and establish the communication between the leader and the workers we'll discuss
+
+and implement very soon right after we implement the tf-idf algorithm but one
+
+thing that I want to point out now is the star-shaped architecture is very
+
+general purpose we can replace the search with any other algorithm that
+
+requires coordination and with very few modifications we will have a new
+
+distribute system that performs a completely different task so we're not
+
+only working towards implementing a distributed search here but also
+
+building almost a template for a group of algorithms we can reuse in the future
+
+in this lecture we'll learn the very common and important algorithm in
+
+information retrieval and text analysis called term frequency inverse document
+
+frequency we came up with the formula to score each document based on the search
+
+query coming in real-time from the user and rank a large set of documents by
+
+their relevance and finally we define the system architecture which we will
+
+implement piece by piece to build an entire general-purpose distributed
+
+system in the next lecture we will continue
+
+with the implementation of the search algorithm and put that implementation to
+
+the test see you all soon in the next lecture

@@ -1,0 +1,23 @@
+Important Tips for Debugging Applications with Zookeeper
+Background
+Occasionally we want to set a breakpoint in our application, and step through the code, line by line, to study our program's flow.
+
+By default when we set and hit a breakpoint in our IDE, all the application's threads are suspended.
+
+However as we recall from the previous lecture, Zookeeper client library maintains a background IO thread that has to send  and respond to pings to and from Zookeeper. If within the configured SESSIONS_TIMEOUT, Zookeeper does not get a ping, it will assume our application has terminated, or lost network connection.
+
+So when we hit a  breakpoint in our code, we need to make sure Zookeeper Client library IO thread is NOT suspended.   
+
+Steps for Setting Breakpoints in IntelliJ while Debugging a Zookeeper Client Application
+1. Set the breakpoint at the line of interest as usual:
+
+
+2. Prior to launching the application in Debug mode, right click on newly added breakpoint (the red circle)
+
+
+3. In the breakpoint window, you will see that All option is checked - this means that when a breakpoint is hit, all the threads will be suspended. Change All to Thread instead.
+
+
+4. Now click Done, and proceed in launching the application in Debug mode.
+
+Now once the desired breakpoint is hit, only the thread that reached that breakpoint line of code will be suspended, while the rest of the threads, including the IO background thread, will continue running as usual, and we will not lose the connection to Zookeeper.

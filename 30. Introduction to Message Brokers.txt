@@ -1,0 +1,187 @@
+welcome back everyone now it is time for us to learn about message brokers we
+
+will start with getting the motivation for message brokers by exploring some
+
+use cases where the direct network communication may be somewhat
+
+problematic and finally we will learn how message brokers can help us to build
+
+scalable and event-driven distributed systems so after perfecting our network
+
+communication techniques why do we even need a different way to communicate
+
+between services one of the properties of direct network communication is that
+
+it inherently synchronous in this case we're not referring to the internal
+
+threading model or the network api used by the servers but to the fact that
+
+through the entire data transaction both the server and the client have to be
+
+present and maintain a connection with each other and even if the servers are
+
+part of different logical clusters or if they communicate with each other through
+
+a load balancer both the servers have to maintain the TCP connection to each
+
+other or to the load balancer all the way from the first buyer of the HTTP
+
+request to the last byte of the HTTP response
+
+to illustrate the synchronous nature of the direct network communication let's
+
+consider a pipeline that handles a financial event for example server a can
+
+be an online store web application that receives a purchase request from a user
+
+then to complete the purchase we have to withdraw the money from the users
+
+account so service a would call service B which is the billing service that
+
+connects two different credit card companies and banks after the money has
+
+been withdrawn from the user we need to update the inventory of the product to
+
+make sure multiple users would not buy the same item so service B will pass the
+
+request to service C which is the inventory service finally we need to
+
+request the shipment of the item to the users address so service C will call the
+
+shipping service service d notice that service a cannot confirm the purchase
+
+until service B and sends back a confirmation but service B would not
+
+send that confirmation until it gets a response from service C and service C
+
+would not send the confirmation until it gets a response from service D the
+
+reason for this chain of dependencies is if for example service a response before
+
+it gets a confirmation from service B but then service B crashes and doesn't
+
+build a user the user would get a false confirmation about an order he will
+
+never receive alternatively if service B sends back confirmation after billing
+
+the user but before a response from service C arrives and service C fails
+
+the user will end up paying for a product he will also never receive so
+
+inevitably we are holding the user for a long time until we can safely send the
+
+confirmation and the longer we keep those connections the more chances are
+
+that one of them will actually break the second problematic scenario is when
+
+one of our servers wants to broadcast an event to many different services that
+
+are interested in receiving it the problem with this scenario is that the
+
+more servers want to receive that event the more direct connections the
+
+publisher server will have to open so this approach just would not scale
+
+the last problematic scenario with their recommendation is when the traffic to
+
+our system has drastic peaks during which our system just cannot handle the
+
+incoming events all at once for example if we have a social media distributed
+
+system where sometimes there is a live event during which millions of users
+
+comment all at once during that time our analytics back-end service may not keep
+
+up with the rate of events and would simply crush so having some sort of
+
+queue where we could store all those events in order temporarily would
+
+definitely help to solve the problem to address all those scenarios we will
+
+use a system called message broker a message broker is a software pattern
+
+that uses an intermediary software component to pass messages between
+
+senders and receivers in addition to passing messages message brokers can
+
+provide additional functionality like data transformation validation queuing
+
+and routing most importantly message brokers provide full decoupling between
+
+the senders and the receivers contrary to load-balancing proxies it
+
+make themselves unnoticeable to clients and servers and create an illusion of
+
+servers talking to each other directly the message broker enforces its own
+
+Network protocol data formats and api's the best part about message brokers is
+
+they decouple the system to the extent that a receiver does not have to be
+
+present when a message is sent and that message can be successfully received
+
+without the presence of the sender if the message processing is complex a
+
+message broker can also act as a load balancer but with a lot more powerful
+
+queuing capabilities which allows us to scale the receivers horizontally but
+
+also keep the messages from getting lost if their receivers are overwhelmed
+
+using the skewing we can decouple our synchronous system into a fully
+
+asynchronous system and provide stronger guarantees that the messages will be
+
+delivered to the intended recipients using the publish/subscribe paradigm a
+
+sender can publish a message to multiple servers by sending a single message to
+
+the message broker and the message broker will take care of broadcasting it
+
+to all the intended subscribers without the sender even knowing who they are on
+
+the other hand a receiver may subscribe to a single topic or queue and receive
+
+messages from many publishers without knowing anything about them
+
+finally when we use their rec network communication the client is always
+
+pushing the message to a passively listening server and as long as the
+
+server is listening on the port it doesn't have any control and when and
+
+how frequently to receive the messages however when we're using a message
+
+broker the sender pushes the messages to the message broker and the receiver
+
+pulls those messages whenever it chooses to that poling approach gives a lot more
+
+control to the receivers over the rate of messages consumption
+
+of course to avoid the message brokers from becoming a single point of failure
+
+or a bottleneck in our system they themselves need to be scalable and fault
+
+tolerant which makes designing as well as configuring the message broker a lot
+
+harder also in most cases since we now have an additional component between our
+
+services our latency is expected to be higher and if we use direct
+
+communication so there's definitely a trade-off to make when choosing one type
+
+of communication over the other the two most popular use cases for
+
+message brokers are the distributed queue which allows us to pass a message
+
+between a single producer to a single consumer and the publish/subscribe which
+
+allows us to deliver a message from a single publisher to a group of
+
+subscribed consumers in this lecture we get the motivation behind message
+
+brokers we learn the difference between the direct synchronous network
+
+communication we've used so far and they event-driven asynchronous communication
+
+we can get using a message broker see you guys in the next lecture

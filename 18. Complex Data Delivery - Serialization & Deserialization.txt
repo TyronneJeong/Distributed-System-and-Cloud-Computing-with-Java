@@ -1,0 +1,413 @@
+hey welcome to another lecture in this lecture we will talk about complex data
+
+objects delivery in distributed systems we will discuss the concepts of data
+
+serialization and deserialization and get familiar with a few ways to change
+
+complex data objects within a distributed system so what do we mean by
+
+complex data objects in the previous lectures we use the HTTP POST message
+
+body to pass tasks to worker knows our task with a simple array of integers so
+
+we agreed between the client and the servers that were simply going to
+
+separate the numbers by a comma and send the message in a string format but what
+
+if we have a much more complex data object we want to pass between nodes for
+
+example we have an online store with thousands of customers in preparation
+
+for the holiday season our sales team wants to look at past purchase
+
+information of customers by city to decide how to price our products and to
+
+whom we want to suggest particular deals to maximize the revenue
+
+so a typical complex request to our system may include many parameters of
+
+different types the question is then how can we take a complex object like this
+
+formulate into a message we can send using HTTP and later and pack it on the
+
+server side to read it correctly the process of packing and unpacking the
+
+data into a format we can send through the network is called serialization and
+
+deserialization respectively more formally serialization is the
+
+process of translating a data structure or an object into some format that can
+
+be either sent over the network or stored somewhere so it can be
+
+reconstructed later this serialization is the opposite process of
+
+reconstructing a previously civilized object back into a data structure or an
+
+object we can work with so anytime we have an HTTP transaction where we pass
+
+some data from one node to another the sender performs data serialization prior
+
+to sending it over the wire and the recipient perform stated D serialization
+
+after it receives the message there are many ways to serialize data
+
+and each one is designed to excel in at least one particular area so we're going
+
+to talk about three formats that are both very popular in the industry and
+
+also represent different classes of data formats these are the JSON format a
+
+standard Java object serialization and Google's protocol buffers
+
+one of the most popular animals to the simplest format is JSON in a JSON format
+
+we can represent a complex object in plain text
+
+it contains fields of type string numbers both integer and floats boolean
+
+arrays and other objects here is an example of a JSON object it
+
+contains fields of multiple types first we have a field of type string then we
+
+have three array fields of different types where the first one is an array of
+
+objects the second is an array of strings and the third one is an array of
+
+integers and finally at the bottom we have one field of type boolean the clear
+
+advantages of using JSON objects for communication between nodes is its
+
+simplicity and human readability even after the serialization from a Java
+
+object to a JSON object we can still easily read it and debug it the format
+
+is essentially using simple plain text so we can easily create a JSON object
+
+using a text editor and send it using kernel for example without needing any
+
+special translation software we also don't tie ourselves to any particular
+
+programming language we can have one node written in Java talking to another
+
+node written in C++ for example and as long as they all know how to send and
+
+parse JSON objects they can easily communicate the third big advantage is a
+
+very easy integration with JavaScript most importantly on the front end as the
+
+name suggests Jason looks almost identical to JavaScript object
+
+representation and therefore is very easy to use when sending data from or to
+
+a web browser so if the objects are coming into our
+
+distributed system from an end-user using a browser the JSON format is a
+
+preferred choice Jason's disadvantages basically stem
+
+from its human readability since it's a language independent plain text format
+
+Java simply does not know how to magically serialize our Java objects
+
+into JSON and vice-versa it often requires us to use an external library
+
+for serialization and deserialization that external library in turn requires
+
+concrete configurations and sometimes class annotations to tell it what feels
+
+to serialize and how to map the field names and types between Java and JSON
+
+for example in this case the field names between Jason and Java are different and
+
+the conversion between types also has to be specifically defined for each field
+
+the second more fundamental problem with jason is the lack of schema to
+
+illustrate this problem let's have this hypothetical thought experiment Joe and
+
+I are building two microservices maybe even using different languages and
+
+therefore we decided to use JSON as the format to exchange messages I told Joe
+
+that I'm going to send him an array of numbers and his service would calculate
+
+their product what I had in mind is an object containing an array of strings
+
+representing pure integers however Joe assumed that he would get the message as
+
+an array of floating-point numbers with a two-digit precision now right before
+
+the launch of the services both Joe and I decided to go on a well-deserved long
+
+vacation and obviously as soon as the first message goes from my service to
+
+Joe's we get a deserialization exception when another engineer comes to
+
+investigate the issue and looks at both our implementations he definitely sees
+
+the discrepancy but he has no idea which one is correct and that's because with
+
+Jason there is no standard way to define a single source of truth that's actually
+
+by design as it makes it very easy to iterate and make changes
+
+the last big disadvantage that comes with the human readability of JSON is
+
+the fact that both parsing a plain text and sending a plain text to the network
+
+is some optimal generally messages containing plain text tend to be a lot
+
+bigger than less human readable binary format as they don't allow any
+
+optimizations also if we have two Java services it feels kind of wasteful to
+
+convert an object to JSON and then back to a Java object just to allow sending a
+
+message through the network that brings us to the next serialization technique
+
+which is the Java standard object serialization in this method if we
+
+intend to communicate between nodes running on a JVM instead of having an
+
+intermediate format like JSON we serialized the Java object into a byte
+
+stream directly and reconstructed on the recipient node to get the original
+
+object state what makes an object in Java eligible
+
+for such seamless serialization in deserialization
+
+is marking the objects class with the serializable interface
+
+the serializable is an empty marking interface that does not contain any
+
+methods or fields objects of classes implementing this interface can be
+
+serialized into a byte stream it can be sent over the network and later
+
+reconstructed back to the original object state by implementing this
+
+interface upon serialization all the members of the class are going to be
+
+automatically serialized except for static members and members marked using
+
+the Java transient keyword for example in this class all the variables would be
+
+serialized except for var1 and VAR tun which are either static or transient
+
+also if we have nested types in our class they also need to be serializable
+
+otherwise we would get an invalid class exception for successful D serialization
+
+of the object on the recipients end the class definition has to match between
+
+the sender and the receiver also the class needs to have an accessible no
+
+arguments constructor because that constructor is going to be called when
+
+the object is reconstructed if either of those conditions are violated we will
+
+get an invalid class exception during the deserialization process to serialize
+
+a serializable java object we need to create a byte array output stream then
+
+we create an object output stream and to serialize the object we simply call the
+
+right object method finally we flush the stream to force the serialization and
+
+get the object as a byte array by calling the two byte array method on the
+
+byte array output stream object the D serialization is even simpler given a
+
+byte array containing our object we create a byte array input stream from
+
+that data byte array then we create an object input stream and finally we call
+
+the read object method on the byte array stream to deserialize our data back to a
+
+Java object the clear advantages of Java
+
+serialization is the guaranteed that the object state will be a hundred percent
+
+the same once reconstructed and we don't have any type ambiguity like we had with
+
+Jason everything we sent is going to be received exactly the same with the same
+
+types and the same names the second advantage is that now we have a very
+
+clear source of truth that we can call a schema that is the original class of the
+
+object we want to send over the network typically we would create the class as
+
+part of a shared library or a code base and share it with every application that
+
+intends to use it for exchanging messages the third advantage is the
+
+native support in all jvm languages that means we don't need to depend on any
+
+external library to perform the serialization and deserialization that
+
+in turn that makes our prototyping and development process very easy of course
+
+now if we want to test our applications endpoint we can just create a message in
+
+our text editor anymore we will have to import the class and write a java
+
+program to send a message to our server the second and big disadvantage of the
+
+standard Java serialization method is our tight coupling with the JVM if we
+
+want to exchange messages with nodes running an application written goaling
+
+or c++ for example this technique will just not work that tight coupling can be
+
+a big problem if we want to build a distributed system that utilizes
+
+different technologies and works on different platforms
+
+that leads us to the third serialization method old protocol buffers protocol
+
+buffers take the well-defined schema and tight language integration and combines
+
+it with language and platform independence as well as high-performance
+
+with protocol buffers we first define the structure or the scheme of our
+
+message in a special protocol math it is very similar to Java or C++ syntax and
+
+store it in a proto file then we use a product compiler to generate a language
+
+specific stub with all the fields in the message as well as the serialization and
+
+the D serialization methods the proto compiler will generate a class for any
+
+language we need so we can use it directly in our program using the
+
+separation between the schema definition in a profile in the generated language
+
+specific stubs the message definition States language
+
+independent but the applications written in different languages can use their own
+
+language specific classes types and methods directly
+
+here is an example of a proto file responding to the same type of message
+
+we discussed in the previous examples we are not going to cover all the details
+
+of the protocol buffers but in general each message is structured as a set of
+
+key value pairs where the key is the numeric tag we see at the end of each
+
+field those tags need to be unique in every message type the names of the
+
+fields are just there for readability and code generation and are not actually
+
+sent with the message they can even be changed at any time without breaking
+
+anything required fields must always be set to a value and can never be removed
+
+from the message definition optional fields don't have to be set and will
+
+default to a value that we can even choose those fields it can even be
+
+removed in the future as long as the original tag number is not reused for a
+
+new field repeated fields represent lists of values that can be of any
+
+length including 0 after this protocol goes through the
+
+proto compiler we get a Java class that contains methods that allow us to use
+
+this outer generated class just like a regular class we wrote ourselves for
+
+each scalar field we get a getter as well as a method to check if it
+
+contains a value and for ever a repeated field the proto compiler generates the
+
+methods to access the list in its entirety or by index as well as a method
+
+to get the total length of the list for every message type we also get a
+
+builder class and has all the setters to build the data model
+
+and finally we get all the helper methods to serialize and deserialize the
+
+object to and from a byte array just like the standard Java object
+
+serialization we get very clear types with no ambiguity and the schema for our
+
+communication is very well defined and stored inside the proto file however
+
+unlike the Java object serialization we have almost complete language
+
+independence thanks to this two-step process of
+
+defining a proto file first and then generating the language specific stub
+
+using the proto compiler another important feature we get from protocol
+
+buffers is efficiency and security when we use JSON our message was sent using
+
+plain text which anyone could intercept and read object serialized using the
+
+Java standard serialization were sent in a binary format but the serialized
+
+object contained all the information about the class including the type of
+
+each field and what classes it inherits from so if somebody intercepts this
+
+message he or she can actually reconstruct the object without too much
+
+effort protocol buffer message on the other hand essentially contain only the
+
+tag numbers and they're encoded values this way only someone who has the
+
+product if initial or it's generated stub can deserialize and read the
+
+message by mapping the field tags to the corresponding types that is just one of
+
+the reasons why the protocol buffer messages are more secure and much
+
+smaller in size now in the flipside the protocol buffer messages are very hard
+
+to inspect in debug not only with our eyes but even with debugging tools
+
+finally this entire process of writing the proto files and then generating the
+
+stubs makes the development a bit harder and more complex
+
+let's summarize what we learn in this lecture we now know what serialization
+
+and deserialization is and have many options on how to transfer complex data
+
+objects between nodes in the distributed system specifically you learn three
+
+different methods for serializing objects the json format the standard
+
+java serialization using the serializable interface and the protocol
+
+buffers there are in fact many other protocols and each one has its
+
+advantages and disadvantages so choosing the right protocol really depends on
+
+your needs in your particular use case specifically when choosing between the
+
+three protocols we learn in this lecture if we want something human readable
+
+language independent and with native support from the browser who would
+
+typically prefer the JSON if we are looking for something very simple that's
+
+to develop and with native Java support we would typically go for the standard
+
+Java object serialization and finally if we don't mind the complexity but the
+
+performance bandwidth and security are important to us we would typically go
+
+with protocol buffers that concludes our discussion on network communication and
+
+we are now ready to build a bigger distributed system using all the
+
+concepts we learn so far so I will see you soon in the next lecture

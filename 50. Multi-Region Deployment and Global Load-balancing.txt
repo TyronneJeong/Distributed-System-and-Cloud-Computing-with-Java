@@ -1,0 +1,355 @@
+hey guys welcome back in this lecture we'll learn how to
+
+distribute our application across multiple geographical regions in unifier
+
+services behind a globally distributed load balancer so let's quickly recap
+
+where we stand with our service so far and what we can do to make it scale
+
+farther so far we'll learn how to deploy our simple application in one region and
+
+distributed across multiple zones using auto scaling policies and we can scale
+
+our service within that region and using outer healing we can make sure that we
+
+have a healthy group of instances ready to take traffic from users however we
+
+would like to deploy our service across multiple regions to provide low latency
+
+for everyone as well as resource isolation and all the other benefits we
+
+mentioned in a past lecture let's go back to our cloud console and deploy our
+
+service in multiple regions first let's navigate to the instance group tab where
+
+we already have a manage group of instances in the US central region to
+
+launch an identical group of instances in a different region all we need to do
+
+is click on create new instance group we will call the new instance group EU
+
+North group which corresponds to the region we will launch this new group of
+
+instances just like in the US central group will provide our users with high
+
+availability by distributing our VMs across multiple zones and most
+
+importantly we will choose the location for the new group to be Europe North one
+
+which corresponds to a data center located in Finland in the zone section
+
+we make sure that all the zones are checked and finally to make sure we
+
+launch an identical service in the new region we choose the exact same template
+
+for our instances as we used in our US central group the rest of the
+
+configuration will be identical to the US central group but they don't have to
+
+as the capacity needs may be different depending on our user base and traffic
+
+pattern in different geographical locations for simplicity we will choose
+
+the same out of scaling policy same minimum of two instances and maximum of
+
+six instances then we'll choose the same cooldown period of five minutes and use
+
+the same health for outer healing like the US central
+
+region now once we click on create the instance group is created and launches
+
+the instances one after the other until it gets to two instances just like in
+
+the US central region and that's it just with a few clicks of a button we have
+
+our service distributed in two geographical locations on two continents
+
+and all our application instances are ready to take traffic and scale up and
+
+down on demand so now that we have our servers globally
+
+distributed we want to abstract this distribution away from our users and
+
+provide a single point of entry in a form of an IP address that will
+
+represent our entire system for that we will use the cloud load balancing
+
+service similar to the load balancing
+
+configuration we use when we learned load balancing will have a front-end
+
+section which describes how our traffic is going to flow into the load balancer
+
+from the outside world and the backend section which describes how the traffic
+
+is going to be routed from the load balancer into our services in addition
+
+we will reserve a static IP address which will never change and represent
+
+our service to the rest of the world this IP address can be easily registered
+
+with the domain name system also referred to as DNS if we desire to share
+
+it with our users in a form of a human readable URL our users can simply type
+
+in the browser one thing to point out is unlike a typical software or hardware
+
+load balancer it runs on a single machine or a single device
+
+the cloud load balancer is actually a fully distributed service it can scale
+
+up and down automatically and provides high availability and fault tolerance
+
+out of the box in other words the cloud load-balancing
+
+service is a very sophisticated distributed system that appears as a
+
+single load balancer so using the cloud load balancing is generally more
+
+expensive than running our own software load balancers on dedicated VMs but in
+
+return we get additional very powerful features and capabilities
+
+so let's go back to our console open our cloud offerings menu scroll down all the
+
+way to virtual private cloud networks and go to the external IP address
+
+section here we can see all the IP addresses of all our services which
+
+appeared to be ephemeral meaning their IP addresses may change upon restart for
+
+our load balancer however will reserve a static IP address we'll give this
+
+address a meaningful name make it globally available and click reserved
+
+please keep in mind that we are built by the cloud vendor for any static address
+
+when it is not in use so after you're done experimenting make sure to release
+
+this address to avoid unnecessary costs now to create our global load balancer
+
+we'll open our menu scroll down to network services and choose the load
+
+balancing option we will click on create load balancer and among all the options
+
+we have we will choose the application layer HTTP load balancer and click on
+
+start and figuration here we have the option to choose between an internet
+
+facing load balancer or an internal load balancer remember that our distributed
+
+system can have many clusters of nodes running different services some of them
+
+can be internal for those internal services we will choose the second
+
+option however since our application instances are public facing we'll choose
+
+the first option of the two now finally we get to a configuration section that
+
+should look very familiar to us except here we will use the UI to create the
+
+load balancer configuration instead of a raw text file so let's give this
+
+configuration a name and start with configuring our load balancers back-end
+
+by creating a new back-end service will call this back-end web application
+
+back-end and add our first service which is our US Central Region instance group
+
+in the port numbers we will leave port 80 as the port on which our back-end
+
+instances will be listening on now generally requests will be directed to
+
+the closest region to the user sending the request however we can
+
+choose a balancing mode to specify an upper bound on the region's capacity
+
+once that capacity is reached traffic will be directed to a different region
+
+for example we can choose the rate balancing mode which corresponds to the
+
+rate of incoming requests and is measured by requests per second and set
+
+the maximum requests per second to be 20 this means that if this region starts
+
+getting overwhelmed by receiving more than 20 requests per second all
+
+additional requests will be directed to a different region instead so let's
+
+click done and then click Add back-end to add our northern European instance
+
+group in the instance group we will choose our EU North instance group leave
+
+the port numbers 80 said the same balancing mode and maximum requests per
+
+second and click done to add the back-end to our load balancer in
+
+addition to the backend services we can also add a health check to our load
+
+balancer unlike the health check we added to the outer healer in the
+
+previous lecture where unhealthy instances were replaced by a new VM the
+
+load balancer health check has a different functionality the load
+
+balancer health check sends periodic requests to the instances just like the
+
+auto healer but if an instance is determined to be unhealthy the load
+
+balancer will simply remove that instance from the rotation until it
+
+becomes healthy again so let's add a new health check for the load balancer by
+
+clicking on create another health check we will call this health check load
+
+balancer health check to differentiate it from the outer healer health check
+
+then we'll set the protocol to HTTP and direct it to our status endpoint now
+
+typically our load balancer health check should be more frequent than the outer
+
+healer health check simply because taking a VM out of the
+
+load balancer rotation is a lot cheaper than fully restarting a VM by the auto
+
+healer also it's possible that a particular VM is not responding only
+
+temporarily for example due to a long garbage collection pause so setting a
+
+more aggressive configuration can be a good idea for our testing purposes we'll
+
+just set the check interval to 5 seconds save and click create to finish
+
+configuring our load balancing back-end section the next part of the load
+
+balancing configuration is the host and path rules which we will skip for now
+
+and move on to our front and configuration section here once we give
+
+our front and configuration a name we make sure that the protocol on which the
+
+load balancer is expecting to receive traffic from the world is HTTP and most
+
+importantly we switch the IP address from an auto-generated ephemeral address
+
+to the static address were reserved for our load balancer earlier and that's it
+
+we have all the rules and configurations for our load balancer to receive traffic
+
+from the internet and direct it to our back-end services so we can quickly
+
+review all those configurations in the review and finalize section and click
+
+create to create our global load balancer once the load balancer is
+
+created we can navigate to the backend section and find the backend we defined
+
+earlier which contains two dynamic clusters one in u.s. Central and another
+
+in north Europe but more importantly we can navigate to the front-end tab where
+
+we can find our newly created load balancer IP address this IP address is
+
+the gateway to our entire distributed system after we wait for a few minutes
+
+for our load balancer to become active we can copy our load balancer IP address
+
+to a separate browser window and here we go we can now see that our load balancer
+
+directed us to one of our instances in u.s. central region which we can see
+
+based on the hostname at the left bottom corner of the page if we refresh a few
+
+times we can see that in fact our load balancer is sending the requests in the
+
+round robin fashion within the US central region and it is not surprising
+
+that all the requests are directed to US central since I'm located in the US so
+
+how can we test that users in Europe for example will be directed by a load
+
+balancer to our cluster and in northern Europe region for that we will use a
+
+little trick we will navigate to the compute engine VM instances section and
+
+once we're there we'll create a new test instance we will call this instance
+
+you region VM and as some of you may have guessed already we will launch this
+
+VM somewhere in Europe let's say in Europe West by making this choice this
+
+VM will be able to emulate a user located in Europe in this case in
+
+Belgium so in the Machine type will choose the most basic VM and click the
+
+Create button to launch this VM once our test VM is ready we will connect to it
+
+using SSH and wait until our connection is established now of course we don't
+
+have a web browser that we can use to open our applications page but we don't
+
+need to instead we'll simply use our familiar kernel command and directed to
+
+our global load balancer static address this will send a get request to our load
+
+balancer just like any web browser and as we can see in the response we get an
+
+HTML page and at the bottom we can see that that response came from an instance
+
+in the EU Norv instance group that means that our request sent from a computer in
+
+Belgium was correctly forwarded by our global load balancer the closest region
+
+in northern Europe and if we send a request to our load balancer again and
+
+again we see that all the requests are sent to different VMs in a round robin
+
+fashion but are all sent or instance group located in north Europe region now
+
+we're confident that users in different geographical locations will be directed
+
+to the closest region which will give them the lowest latency and the best
+
+user experience in this lecture we'll learn how to
+
+achieve a higher level of skill ability with distributing our service across
+
+multiple geographical locations later we placed our globally distributed service
+
+behind a cloud load balancer that exposes a single point of entry for all
+
+our users around the world in a form of a static IP address then we briefly
+
+discuss some of the cloud load balancer capabilities like high availability
+
+balancing mode with the based on the region CPU utilization and rate of
+
+incoming traffic as well as health checks to make sure that our users
+
+requests are sent to only healthy application instances finally we put our
+
+global load balancer to the test by sending the request both from the US and
+
+from Europe and observed that the request to our load balancer were
+
+directed correctly to the closest region based on the sender's geographical
+
+location we now have the skills to launch our own
+
+distributed system on the cloud and scale it to any number of users regions
+
+or instances one thing to keep in mind is most cloud services including the
+
+ones we demonstrated in the section cost money on a small scale they're actually
+
+very cheap but over time those costs do add up so please make sure to stop or
+
+delete any service that you no longer need and finally feel free to explore
+
+other features and cloud vendors as cloud computing is always at the cutting
+
+edge of technology and allows us to do really amazing things
+
+I hope you enjoyed this and I can't wait to hear what called distributed systems
+
+you build on your own

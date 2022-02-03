@@ -1,0 +1,161 @@
+welcome back in this short lecture we will learn how to run a Che proxy on any
+
+platform locally this is just supplementary material to our previous
+
+lecture that will enable us to easily experiment with load balancing without
+
+going through a complex installation process
+
+since in production H a proxy typically runs on some sort of Linux distribution
+
+for efficiency it doesn't provide the same level of support for other
+
+platforms like Windows for example which provide entirely different api's however
+
+even the process of installing or building a proxy from source on
+
+different Linux distributions and Mac OS is completely different so in addition
+
+to the official ways to run a a proxy I wanted to provide a simpler and more
+
+unified alternative approach the tool we're going to use for that is
+
+called docker docker is out of scope for this course
+
+it's completely fine if you've never used it before in the end of the lecture
+
+all we'll need to really remember is those two commands on how to start and
+
+stop our services but instead of simply providing those commands that magically
+
+run a chip proxy in our servers I wanted to take a few moments and explain how it
+
+all works docker allows us to run software
+
+packages on a single machine in complete isolation from each other inside
+
+separate containers each container runs its own software and maintains its own
+
+set of libraries and configuration files that are completely decoupled from other
+
+containers each container is based on a predefined image that describes the
+
+entire applications environment as well as the command on how to run the app
+
+docker was originally designed and developed for Linux which supports
+
+resource isolation features that allow running entirely separate containers
+
+while reusing the same OS kernel this way we avoid the overhead of running
+
+multiple heavyweight virtual machines the great part about docker for us is
+
+for platforms like Windows that do not have the same resource isolation
+
+features like Linux docker will run a single Linux virtual machine behind the
+
+scenes for us so we can run the same commands in the same containers on any
+
+platform after you follow the link to the Dockers
+
+website sign up and install the free docker program we can navigate into the
+
+resource that comes with this lecture where we can find two directories and
+
+the docker compose file the web app directory contains the Java project for
+
+our web application as well as the docker image which we define in a docker
+
+file in the docker file we first start from a maven image copy the source code
+
+of our application into the container and then we run the maven package
+
+command to create the web apps executable jar then we take the open JDK
+
+image copy the jar file into the container and finish the image with the
+
+description of the command it will run the web app when the container is run
+
+notice the last part which provides the arguments to our web application which
+
+will later override for each container we create from this image the H a proxy
+
+image is even simpler all it does is start with the H a proxy image which
+
+already contains the HT proxy executable and all these dependencies then we copy
+
+the H a proxy config file we created in a previous lecture into the container
+
+and run H a proxy the last part is the docker compose file which is the
+
+configuration file docker we'll use to launch three containers that will run
+
+our web app based on the image we define at the docker file inside the web app
+
+directory for each container instance we define a different set of arguments we
+
+pass to the web app command-line also for each service we have a mapping
+
+between the port inside the container which appears on the right to the port
+
+in the host machine which appears on the left in this case the ports in the
+
+container and our host machine are the same for simplicity but it doesn't have
+
+to be this way in general now in a similar way at the bottom we tell docker
+
+to run the H a proxy container which is based on a docker file inside the H a
+
+proxy directory we also export port 80 for incoming traffic as well as port 83
+
+for the stats web page now I want you to pay attention to the names of our web
+
+application services as far as HT proxy is concerned those other services that
+
+are running on different content are running on completely different
+
+machines with different addresses and the addresses of those containers are
+
+their names so we will need to use those names in the H a proxy config file to
+
+route the traffic from H a proxy to our web app containers so let's open H a
+
+proxy config file and change the address of each server from localhost to the
+
+address we define in a docker compose file finally once we ensure that docker
+
+is currently running in our machine will run the docker compose up - - build
+
+command which will build our images and run all the containers and as we can see
+
+we have F 1 F 2 and F 3 running and H a proxy is already sending those servers
+
+health checks now all we need to do is test H a proxy in the browser just like
+
+we did in the previous lecture first let's go to localhost port
+
+83 to make sure we have access to H a proxy stats page and then we simply go
+
+to localhost and verify that our load balancing logic is working just like we
+
+expect now if we want to make any changes to our H a proxy config file or
+
+we simply want to stop all the services entirely and we can either press ctrl C
+
+or run the docker compose down command
+
+in this lecture we'll learn how to use docker to run three instances of our web
+
+application as well as H a proxy on any platform using docker this way even if
+
+you're running Windows on your machine you can still run H a proxy without the
+
+need to install and setup a virtual machine and even if we're using an
+
+operating system that is supported by a cheap proxy we can still follow the same
+
+steps so we don't need to go through a separate installation process
+
+have fun experimenting with H a proxy and I will see you soon in the next
+
+lecture

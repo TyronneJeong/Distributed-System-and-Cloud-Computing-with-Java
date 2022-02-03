@@ -1,0 +1,167 @@
+hey guys welcome back in this lecture we will learn about a streaming and
+
+messaging platform called Apache Kafka we'll start with a short introduction to
+
+Kafka and then proceed to learn about the abstraction layer it provides to
+
+message producers and message consumers and finally we will learn how to use
+
+Kafka as a distributed queue as well as a publish/subscribe messaging system
+
+so what is Apache Kafka and why did we choose to learn it
+
+apache Kafka is a distributed streaming platform it can be used to exchange
+
+messages in real-time and between different services Apache Kafka can be
+
+described as a message broker on a high level
+
+however internally it's actually a distributed system that uses multiple
+
+brokers to handle the messages there are many popular and great message brokers
+
+used in the industry both free and open source like RabbitMQ active in queue and
+
+others as well as proprietary messaging systems offered by the different cloud
+
+vendors the reason Kafka is such a great system for us to learn is that in
+
+addition to its popularity it not only provides us with both distributed
+
+queuing and publish/subscribe capabilities but is also beautifully
+
+designed distributed system understanding how it works both on the
+
+surface and internally will teach us a lot of valuable lessons on how to build
+
+a scalable and fault-tolerant distributed system
+
+so now let's start talking about the abstraction layer Kafka provides us a
+
+message we want to publish to Kafka comes inside a record it consists of a
+
+key a value which is our message and the timestamp the center of the obstruction
+
+Kafka provides us is the topic we can think of a topic as a category of
+
+messages or events publishers can publish records to any topic and
+
+subscribers can consume records from any topic for example if we have an online
+
+store we can have a topic for purchases where new purchases would be published
+
+and consumed in the same time by the billing service the user service and the
+
+product service we can have a separate topic for product reviews where new
+
+product reviews would be published later those reviews would be consumed and
+
+aggregated per product by the product service and consumed an aggregated per
+
+user by the user service and finally we can have a third topic for errors and
+
+exceptions all the services can publish errors to that topic and they will be
+
+consumed by our monitoring and alerting service instead of having a monolithic
+
+log or queue for each topic Kafka allows us to partition each topic into multiple
+
+logs it really look like arrays of records whenever a new record is
+
+published to a topic it is appended to one of those partitions and is assigned
+
+a sequence number in an increasing order each such sequence number is called an
+
+offset we can think of a topic as a collection of ordered queues where each
+
+partition is a separate independent queue of Records each partition
+
+maintains the messages in the order they were published however there is no
+
+global ordering between the messages inside the topic the partition to which
+
+a record is appended depends on the key the publisher sets in the record more
+
+precisely a hash function is applied on the records key and that determines
+
+where that record would go thanks to topics partitioning Kafka
+
+allows us to scale a single topic horizontally how Kafka does it exactly
+
+we'll discuss in detail in the next lecture but in general the more
+
+partitions we have in a topic the higher parallelism and performance we can
+
+achieve for example the purchases topic in an
+
+online store gets a lot of messages so we can spread those messages across a
+
+larger number of partitions purchases from different users are not
+
+related to each other so maintaining the order of those events may not be very
+
+important so we can use the user ID as the key for the record this way we can
+
+spread all the purchasing events across all the partitions on the other hand the
+
+order of events from the same user is important for example a user may
+
+purchase an item and then immediately ask for a refund for the same item and
+
+because the key which is the user ID for both messages is the same the records
+
+for both those events will go to the same partition and will be consumed in
+
+the correct order in the same time topics that receive
+
+fewer messages can have fewer partitions or if the order is always important in
+
+all cases we can even have only one partition per topic
+
+so now that we understand the abstraction layer Kafka provides to the
+
+producers let's see how the consumers can consume messages from Kafka
+
+in order for an application instance to consume messages from a Kafka topic a
+
+consumer has to belong to a consumer group when consumers subscribe to a
+
+topic each message is delivered to a single instance in a consumer group
+
+so the processing of the published messages is complex we can place
+
+multiple consumer instances in a group and the messages to our topic will be
+
+load balanced among all the consumers within that group
+
+alternatively if we want to use Kafka as a publish/subscribe messaging system we
+
+can place each consumer in a different consumer group which means every message
+
+published or topic will be delivered to all the consumers
+
+in this lecture we'll learn about a very popular and highly scalable streaming
+
+and messaging system called Apache Kafka we learned that messages to Kafka are
+
+wrapped in a producer record it consists of a key a value corresponding to our
+
+message and the timestamp we talked about Kafka topics which are categories
+
+for events or messages in their internal structure which consists of one or more
+
+partitions each partition is an ordered queue or array of messages where each
+
+message is assigned a number called offset and finally we talked about
+
+consumer groups where messages are load balanced and one consumers within the
+
+same consumer group like a distributed queue and are broadcasted to all the
+
+different groups just like in the publish/subscribe system in the next
+
+lecture we'll dive deeper into Kafka and learn why it provides such an
+
+obstruction and how it achieves high scalability performance and fault
+
+tolerance see you guys soon

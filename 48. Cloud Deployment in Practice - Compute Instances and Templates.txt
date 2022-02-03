@@ -1,0 +1,211 @@
+welcome back now that we got a thorough introduction to cloud computing and its
+
+general concepts it's time to learn how to deploy a distributed system on the
+
+cloud in practice so in this lecture we will learn how to deploy an application
+
+on cloud compute instances and automate the process using instance templates to
+
+demonstrate and practice deployment on the cloud we're going to use Google
+
+cloud platform as the cloud vendor in this and the next few lectures but
+
+before we jump to the fun part I need to share a short legal disclaimer since at
+
+the time of creating this course I'm also a full-time employee at Google I
+
+need to make it clear that I do not represent Google by any means and this
+
+content is not endorsed by Google everything we're going to learn in the
+
+section is obviously my personal opinion and comes from my own experience the
+
+only reason I chose Google cloud for the demonstrations is that I personally
+
+found it easier to start with especially for beginners but any other cloud vendor
+
+would be a fine choice and it all depends on your personal preference and
+
+business requirements so now that we got that out of the way
+
+let's go ahead and deploy our first application on the cloud
+
+to practice deployment on the cloud I prepared a very simple web application
+
+ahead of time the application will simply randomly pick one of my favorite
+
+quotes by famous people and show it in the browser the port on which our app is
+
+going to listen on will be passed to it in the command line or use port 8080 by
+
+default so let's first test application locally and once the web server is
+
+running let's go to our web browser and as we can see we got our quote of the
+
+day and at the bottom we see the host name which is my personal computer and
+
+each time we refresh the page we get a new quote in addition our app has the
+
+status endpoint which we'll use for health checks later in the section now
+
+let's go back to our IDE and build and package the application so we can deploy
+
+it as an executable jar on a cloud compute visual machine now let's switch
+
+back to the browser and go to our cloud vendors web page once logged in we
+
+navigate to our console and open the menu where we can see all the offerings
+
+from our cloud vendor the first thing we're going to do is upload our jar file
+
+to a storage bucket so our compute VMs will have access to our app so first we
+
+navigate to cloud storage and simply create a new bucket we will call our
+
+bucket application bucket then we click continue to leave everything else by
+
+default for now and finally after we click create our bucket is ready then we
+
+upload our jar file by clicking upload files and choose our jar file which
+
+contains our logic with all its dependencies once the upload is complete
+
+our application is available on the cloud so let's navigate to compute
+
+engine and choose VM instances that is where we can rent compute resources
+
+where we can deploy our apps so let's create our first VM name it web
+
+application instance now in the region drop-down we can choose the geographical
+
+location where we can rent this VM we're going to leave it as US central one
+
+which is in the state of Iowa on the right side that we have different zones
+
+within that geo region which we'll leave as is as well for machine type we have
+
+many chance to choose from but for our
+
+purposes we will choose the cheapest and most basic micro instance which has only
+
+one CPU on and about half a gig of memory in the next part we can choose
+
+what operating system we want to boot from what applications we want to be
+
+pre-installed on our VM as well as the type and size of our disk here we're
+
+also going to stick with the default as we don't need anything special finally
+
+and most importantly in the firewall section we're going to allow HTTP
+
+traffic coming in so we can access our applications front-end and that's it
+
+once the status of the instance becomes green we can click on the SSH button and
+
+open an SSH session browser window
+
+once connected to our VM we see that actually Java is not installed yet so we
+
+will run a command to update the current repositories and finally installed the
+
+latest open JDK on this VM the installation process can take a few
+
+minutes which we should take note of since this is the time it will take each
+
+of our instances to boot and be ready to serve our app once we are done our VM is
+
+ready to run our application so first we need to copy our jar file from our
+
+storage application packet to the current VM which we will do by running
+
+the GS utils copy command which is a Google Cloud tool to access its cloud
+
+storage and finally it will launch our application listening on port 80 to test
+
+our application we copy the compute instance IP address into another window
+
+and here we go our application is now deployed on a cloud instance at the
+
+bottom we see that it is indeed running on the web application instance host and
+
+it is now able to serve content to anyone in the public Internet now if we
+
+go back to our console and click on the VM instance and go to monitoring we can
+
+see graphs that show us our VM CPU usage network usage and disk i/o and finally
+
+once we're done with our VM we can either stop it temporarily or delete it
+
+forever
+
+successfully deployed our web application on the cloud we want to take
+
+it one step further obviously repeating all the installation
+
+steps manually for every instance is time-consuming and error-prone and would
+
+not allow us to scale our system to hundreds or thousands of PM's and
+
+services so we would like to do it successfully once and create a template
+
+out of it to repeat it consistently as many times as we want for that we create
+
+the instance template so let's navigate to the instance
+
+template tab and click on create new template let's give our template a name
+
+choose the same type of machine with it before leave the same operating system
+
+and configure the firewall to allow HTTP requests but now in addition we're also
+
+going to provide all the commands we type manually as a single startup script
+
+so now every compute instance we create from this template will run the script
+
+at boot time which will install Java bring in our applications jar and
+
+started listening on port 80 notice that when creating this template
+
+we don't have to specify the region since we can reuse this template to
+
+launch compute instances anywhere we want so let's create a template and now
+
+once the template is ready we can simply click on create VM or all we need to do
+
+is just give it a name choose the region and zone which we'll leave as is and
+
+click create to launch the VM once the VM is done booting we can copy its
+
+address to another browser window and find a new instance of our application
+
+running one thing to point out is that it may actually take a few minutes for
+
+the instance to become available depending on the time it takes to
+
+execute all the startup scripts provided in a template in my case it actually
+
+took about five minutes so exercise patience if you can't open the web page
+
+right away and finally once we're done with this VM we can also go ahead and
+
+delete it to make sure we don't get built for running the VM when we don't
+
+actually need it in this lecture we deployed our first
+
+application on the cloud we'll learn how to store our application and optionally
+
+any additional resources it means on cloud storage then we'll learn how to
+
+create virtual machine instances and rent compute resources in remote
+
+geographical locations where we want our service to be available next we'll learn
+
+how to connect bootstrap and launch our application to be publicly available to
+
+any users on the public Internet and finally we automated our deployment
+
+process using instance templates and a custom startup script to eliminate any
+
+errors and also take one step closer to a full distributed system deployment
+
+thank you and I will see you in the next lecture

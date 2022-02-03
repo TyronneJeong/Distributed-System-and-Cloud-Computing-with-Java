@@ -1,0 +1,126 @@
+hey guys great to see you all back for another lecture in this lecture we will
+
+learn the next very important building block for any distributed system the
+
+service registry we will learn how service discovery in the cluster works
+
+and will implement it using Apache zookeeper so what is service discovery
+
+when a group of computers start up the only device they are aware of is
+
+themselves even if they're all connected to the same network the formal logical
+
+cluster the different nodes need to find out about each other somehow they need
+
+to learn who else is in the cluster and most importantly how to communicate with
+
+those other nodes the obvious simple solution can be a static configuration
+
+we simply find out all the nodes addresses ahead of time and then we put
+
+them all on a single configuration file and distribute the file among all the
+
+nodes before we launch the application this way all the nodes can communicate
+
+with each other using those addresses the problem of course is if one of the
+
+nodes becomes unavailable or changes its address after it gets restarted for
+
+whatever reason the other nodes would still try to use the old address and
+
+will never be able to discover the new address of the node also if we want to
+
+expand our cluster we'll have to regenerate this file and distributed the
+
+new file to all the nodes actually to this day a lot of companies manage their
+
+clusters in a similar fashion with some degree of automation for example every
+
+time we add a new node we can update one central place with the new configuration
+
+then an automated configuration management tool like chef or puppet and
+
+push the configuration to the entire cluster and update every nodes
+
+configuration automatically this way the configuration is more dynamic but may
+
+still involve a human to update the configuration the approach we are going
+
+to take is using a fully automated service discovery using zookeeper the
+
+idea is as follows we're going to start with a permanent Z node called service
+
+registry every node that joins the cluster will add an affair
+
+sequential node under the service registry node in a similar fashion as in
+
+the leader election unlike in the leader election in this case the Z nodes are
+
+not going to be empty instead each node would put its own address inside its Z
+
+node now that was the service registry part the service discovery now is very
+
+easy to implement H no that wants to communicate or even just be aware of any
+
+other node in the cluster it's to simply register a watcher on the service
+
+registry Z node using the get children method then when it wants to read or use
+
+a particular nodes address the node will simply need to call the get data method
+
+to read the address data stored inside the Z node and if there is any change in
+
+the cluster at any point the node is going to get notified immediately with
+
+the no children changed event potentially with this implementation we
+
+can implement a fully peer-to-peer architecture where each node can
+
+communicate freely with any node in the cluster in that architecture if a node
+
+is done or a new node joins the cluster all the nodes will get modified and will
+
+act accordingly in the leader workers architecture the
+
+workers don't need to know about each other at all and nor does the leader
+
+need to register itself in the registry so the workers will register themselves
+
+with the cluster but only the leader will actually register for notifications
+
+this way and the leader will know the state of the entire cluster at all times
+
+and will be able to distribute the work accordingly also if the leader dies the
+
+new leader will remove itself from the service registry and continue
+
+distributing the work in this lecture we'll learn the ball a
+
+very important building block in distributed systems the service registry
+
+we'll learn about a few different approaches to the problem and learn how
+
+to implement the service registry and service discovery using Apache zookeeper
+
+Apache zookeeper is used by many companies and projects for service
+
+discovery in production however there are many other tools and technologies
+
+that offer comparable capabilities few notable ones are at CD console and
+
+Netflix Eureka but there are many others as well having an automated service
+
+discovery allows our system to be very scalable and dynamic as nodes can be
+
+added or removed at any point one more thing I want to point out is we still
+
+need to distribute the adders of zookeeper to the entire cluster so the
+
+static or somewhat manual configuration management approach we mentioned in the
+
+beginning of the lecture is still very valuable despite its limitations
+
+in the next lecture we'll implement the service discovery in practice see
+
+awesome
+

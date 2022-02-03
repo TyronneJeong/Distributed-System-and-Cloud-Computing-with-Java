@@ -1,0 +1,359 @@
+welcome back in this lecture we'll continue the
+
+implementation of the distributed system for the document search and complete the
+
+search cluster logic of the implementation of the search cluster
+
+along the way we'll practice the use of protocol buffers for serialization of
+
+complex data over the network so let's look at our architecture diagram once
+
+again and identify what components we need to implement to complete the search
+
+coordinator in the search cluster in the last lecture we already define the model
+
+for exchanging data between the worker nodes and the search coordinator so now
+
+we will focus on the communication between the search cluster coordinator
+
+and the user facing front and server since the message from the coordinator
+
+to the front end server is a sordid collection of all the results were
+
+received from the search nodes its size can get very big also the front end
+
+server and the search cluster are completely separate code bases and
+
+separate software systems so decoupling them with an easily extendable and
+
+flexible API would be a good design choice so we will use the protocol
+
+buffers for serializing data between the front end and the search coordinator
+
+also as we mentioned in the previous lectures to communicate the address of
+
+the coordinator to the front end we'll add the additional coordinator service
+
+registry and to send tasks from the coordinator to the worker nodes
+
+we'll use the familiar to us HTTP client we implemented in the lectures on HTTP
+
+so now let's jump back to the code and start the implementation of the search
+
+coordinator we start with the same application class
+
+as the start point to our application but this time we add an additional
+
+instance of a service registry to store the coordinators address the only
+
+difference between the worker service registry and the coordinator service
+
+registry is the Z node name we pass into the constructor which tells the service
+
+registry where to store the addresses both of those service registries are
+
+passed into their own election action instance in the own election actions on
+
+elected to be leader method we have a very similar logic to what we
+
+implemented in the on worker method similarly to the search worker we have
+
+the search coordinator class which is only partially implemented at this point
+
+and we will fill in all the logic in a moment that class will handle all the
+
+incoming HTTP requests from the front end server and create a response with
+
+all the sordid results collected from the search workers on the next line we
+
+pass that search coordinator instance into the web server and after we start
+
+the HTTP server you register the snows address into the coordinator service
+
+registry just like the search worker we implement in the previous lecture the
+
+search coordinator class implements the on request call back which means we have
+
+to implement these two methods the get endpoint returns the relative path where
+
+the coordinator expects to receive search requests from the front end
+
+server and the handle request is the place where we fill in all the search
+
+coordinator logic to save us some time we also have a few convenient methods I
+
+implement in ahead of time which will help us in completing our tasks first we
+
+have the read documents list which is called from the constructor and simply
+
+reads all the documents full names currently present in our document
+
+repository the second method we have is split documents list which takes a
+
+number of search workers we currently have in a cluster and a list of
+
+documents we read using the read documents list the method then divides
+
+all the documents in a fair way among all the workers so we get as many lists
+
+of documents as we have workers each such list of documents can later be sent
+
+to a different worker node the third method is the create tasks method
+
+as the name suggests creates a list of tasks where each task will be sent to a
+
+different search worker the method called a split document list to get as
+
+many lists of documents as we have workers and later it creates a list of
+
+tasks where each task contains all the search terms and only a subset of
+
+documents allocated for a given worker and finally we have the send tasks to
+
+workers method which takes those tasks and a synchronously sends them to the
+
+currently available workers using the web client we implement it in a past
+
+lecture after all the tasks are sent out the method waits until it either gets a
+
+valid response or an exception from each of the worker nodes and once all the
+
+valid results are collected it returns it to the caller the web client makes
+
+use of the built-in Java HTTP client just like it did in the lectures on HTTP
+
+but is the final step after receiving a response from the worker it DC realizes
+
+the message body into a result object so now that we understand all our setup for
+
+the search coordinator let's create the data model for exchanging messages
+
+between the front and server and the search coordinator I've already defined
+
+the schema for this data model in this profile at the top of the file we have
+
+the protocol buffers version and the proto package which just allows us to
+
+use the same type names in different profiles since we are going to generate
+
+a Java class from this proton we have those two additional important options
+
+defined specifically for Java the first one is the Java package for the Java
+
+class will generate using the proto compiler in this case it's going to be
+
+the model dot product package right next to the location of the proto file the
+
+second option is the Java outer class which will contain all the classes
+
+corresponding to each of the message types we have in this proto file the
+
+first message type is the request which will be sent from the front end to the
+
+search coordinator and contains a request string field containing the user
+
+supplied search query the second message type is the response which contains a
+
+list of 0 or more documents each relevant document is
+
+itself a message type which contains at least the document name but can
+
+optionally contain the document score in the tf-idf algorithm and a document size
+
+if we want to get fancy our search cluster can maybe even parse the
+
+document author's name for each document and also pass it to the front-end server
+
+the front-end server can later be updated to show it to the user now to
+
+turn this profile into a Java class we first need to download the proto
+
+compiler so let's go to the official protocol buffers download page and under
+
+the latest version of the release packages we'll go to the release page
+
+link this will take us to the github repository of the protocol buffers where
+
+if we scroll down we'll find a proto C binaries for each platform proto C is
+
+the protocol buffers compiler we are looking for
+
+after we download the relevant version and unpack it we can find a proto C
+
+compiler binary inside the bin directory now let's go back to our IDE and open a
+
+terminal in the terminal let's call the proto C compiler with the Java out
+
+parameter pointing at the root of our Java code base and the second parameter
+
+is simply the path to our profile definition if we wanted to generate a
+
+class for a different language than Java we would follow the same process and use
+
+the same tool except instead of Java out we would use a different parameter like
+
+c-sharp out or python out for example now as we can see the proto c generated
+
+the java class with the outer class name as we defined in the proto file and
+
+placed it in the right location corresponding to the java package we
+
+specified in the proto the last thing we need to add for this generated Java
+
+class is the proto buffers dependencies in the maven pom dot XML file this will
+
+simply bring all the libraries that the generated Java class is using internally
+
+into our project from this point on the implementation is fairly technical we
+
+now go back to the search coordinator in tight everything we have into a work and
+
+coordinator solution similarly to the search worker the handle requests will
+
+first handle the deserialization of the incoming request body into a Java object
+
+this time to be serialize the HTTP message body into the generated
+
+JavaScript arse from method then we will create the response object by calling
+
+the create response method which will implement in a moment finally we will
+
+serialize the object back into a byte array by calling the two byte array
+
+method also if something went wrong in the parsing of the incoming request
+
+we'll return an empty response back to the front-end from here we simply need
+
+to implement the create response method which now operates on pure Java objects
+
+the Java classes generated by the proto compiler are immutable so to create a
+
+new response object we'll need to create a response builder for debugging
+
+purposes let's print out the search query we got
+
+from the request by calling the generated get search query method then
+
+we break the search query into individual terms after that we use the
+
+worker service registry to get all the addresses of the currently available
+
+worker nodes in the search cluster for some reason our cluster is still empty
+
+we print out that we currently don't have any available workers and return an
+
+empty response object this is of course only one of the ways we can handle this
+
+scenario now if everything is correct and we do have some workers in the
+
+cluster we proceed to create the tasks we will send to our workers then we send
+
+those tasks to all the worker nodes and aggregate all the results into a single
+
+list finally we need to aggregate all the results into a sorted list of
+
+document stats objects where the first element will
+
+correspond to the most relevant document to the search query and the last element
+
+will correspond to the least relevant document according to the tf-idf
+
+algorithm once we have that sorted list simply add it to our response builder
+
+and build a response object which were returned to the color really the last
+
+piece of logic we need to implement at this point is the actual aggregate
+
+results method which will perform the search coordinators aggregation step in
+
+which it will combine all the results score and sort all the documents luckily
+
+most of the hard work we've already done when we implemented the tf-idf algorithm
+
+so inside the method will start the aggregation step of the creation of the
+
+all documents results map where we iterate over all the results we got from
+
+the workers and put them all in the single map after we have all the results
+
+in this one map we can move on to the scoring step so let's print this out the
+
+result of the scoring step is an ordered map that maps from a score to a list of
+
+documents that received that relevant score to get that ordered map we call
+
+the tf-idf s get document score method which we implement it in the tf-idf
+
+lecture this method takes two search terms and the aggregate results were
+
+received from the War and performs all the scoring and sorting
+
+for us the final step is converting this map into a single list of document stats
+
+objects which we can actually send back to the front end so let's separate that
+
+last piece of logic into a method called sort documents by score the sword
+
+documents by score takes that ordered map that maps from a score to a list of
+
+documents then we declare the sordid documents stats list which will contain
+
+our list of results to create those document stats objects we iterate over
+
+all the score two documents map entries in each iteration first get the score
+
+and store it in a variable then we either it over all the documents for
+
+that score we then wrap the document path with a file object so we can easily
+
+get the documents name and the document size then we create the document studs
+
+builder and using the generated builders fluent API we set the document score the
+
+documents name and the document size and complete the object creation with
+
+calling the build method finally we add the document stats object to the list of
+
+results and we're done with all the documents in the map we'll return an
+
+ordered list of document stats where the list is sorted in a descending order
+
+based on the documents relevance now we just need to cover all the exceptions in
+
+the top-level try-catch and that's it our distributed tf-idf search cluster is
+
+now ready any instance of this application dynamically in run time can
+
+assume the role of the cluster coordinator or the search worker or form
+
+its role in the distributed algorithm and communicate with the corresponding
+
+nodes in the distributed system using HTTP and data serialization
+
+this is a really exciting milestone Renault only one step away from
+
+completing our distributed system before we move to the last part let's take a
+
+moment and recap what we already accomplished
+
+we took a simple document search algorithm and transformed it into a
+
+distributed system it can be easily deployed on the cloud and performed the
+
+algorithm in parallel this distributed system can operate on a large data set
+
+that can potentially exceed the capacity of a single computer using zookeeper we
+
+made the cluster completely dynamic fault tolerant and highly scalable also
+
+our distributed system components are loosely coupled which is a key feature
+
+for a well-designed system for example by choosing a serialization method like
+
+protocol buffers over HTTP we don't limit ourselves to any technology or
+
+language to implement the front-end server in the next lecture we'll finish
+
+the distributed system by implementing the user facing front and server and
+
+test our system and to end see you soon in the next lecture

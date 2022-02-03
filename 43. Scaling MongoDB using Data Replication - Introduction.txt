@@ -1,0 +1,104 @@
+welcome back in this lecture we will learn to scale MongoDB using data
+
+replication we will learn how to group nodes using replication sets and finally
+
+we will talk about right semantics and read preferences so let's talk about
+
+data replication in one go dB in the previous lecture we launched the
+
+single one with the instance which contained all of our data and our
+
+application client in our case the Mongo shell connected Road and read all the
+
+data from that single node to provide redundancy for data availability and
+
+resilience to failures of individual nodes we're going to replicate our data
+
+by launching multiple mangu T instances a group of mangu the instances that
+
+contain the same data is called the replication set
+
+in a replication said there is one node that is the primary and the rest of the
+
+nodes are considered secondaries which is a variation of the master/slave
+
+architecture we learned in the previous lectures in MongoDB by default all reads
+
+and writes from the application client go to the primary node and the secondary
+
+is constantly sync with the primary to stay up-to-date if the primary node
+
+fails the secondary is detected and hold an election to elect a new primary until
+
+that election completes no write operations can be acknowledged once the
+
+old primary recovers it can join back either as a primary or a secondary
+
+depending on our configuration so now let's talk about write semantics in the
+
+replication set by default a right operation is
+
+acknowledged as soon as the data is successfully read and add the primary
+
+however that may result in data loss if the primary goes down before the data is
+
+a synchronously replicated to the secondaries so when we issue the right
+
+operation from our application we can specify a right concern of two or more
+
+nodes similarly we can specify right concern majority to force the right to
+
+be replicated to the majority of the nodes regardless of the cluster size
+
+this is one of the reasons it is recommended to have an odd number of
+
+nodes at each replication set now that we understand the right
+
+semantics let's talk about reeds as we mentioned before all the read
+
+operations are also directed to the primary to guarantee straight
+
+consistency however we can change that behavior using the read preference when
+
+we issue the read request we can set the read preference to primary preferred to
+
+still read from the primary when it's available but if the primary has failed
+
+and a new primary has not been elected yet we can still read from the secondary
+
+nodes that are not too much out of sync if the number of reads is too much for
+
+the primary and we're fine with relaxing our consistency requirements to eventual
+
+consistency we can even set the preference to secondary and if we
+
+deployed our replication set across multiple physical locations we can
+
+specify the read preference to nearest to read from the node that has the
+
+lowest latency to our application client this again can result in reading stale
+
+data however that is a trade-off we may be willing to pay for lower latency
+
+depending on the business requirements so before we apply all this knowledge in
+
+practice let's quickly summarize what we learn in this lecture we'll learn how to
+
+group a set of MongoDB nodes into a replication set which provides high
+
+availability through redundancy we later learned about MongoDB master/slave
+
+architecture where a primary node takes all the writes and reads by default for
+
+consistency and the data is a synchronously replicated to the
+
+secondary nodes we learn how we can trade-off right operation latency for
+
+higher reliability by increasing the write concern to multiple nodes and
+
+finally we talked about read preferences that allows us to trade-off street
+
+consistency for the weaker eventual consistency but increase our read
+
+throughput or lower our latency see you guys in the next lecture
+

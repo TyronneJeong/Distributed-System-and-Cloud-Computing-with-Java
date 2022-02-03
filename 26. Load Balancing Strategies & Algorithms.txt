@@ -1,0 +1,187 @@
+hey guys welcome back in this lecture we'll continue the discussion about load
+
+balancers and learn about the different strategies and algorithms load balancers
+
+can use two fairly direct requests or application servers the easiest is the
+
+most common strategy that load balancers used to direct traffic to our servers is
+
+round-robin in this strategy each server gets one request in its turn and once we
+
+send at least one request to each server we start over assuming that all requests
+
+cost the same amount of load on any given server and that all the servers
+
+are identical this guarantees a uniform load distribution through our entire
+
+cluster if some of our servers are more capable
+
+of taking higher load or if we intentionally want to direct more
+
+traffic to some servers and less to others we can use the weighted round
+
+robin strategy in the weighted round robin strategy we assign a higher way to
+
+service we want to send more requests relative to others in this example the
+
+top server will receive only 1 out of every 10 incoming requests whereas the
+
+rest of the servers are weighted 3 times higher which would spread the remaining
+
+90% of the traffic equally among those servers
+
+where that Ron Robin can help not only if we have hardware asymmetry but also
+
+if we want to release a newer version of our application software more gradually
+
+by upgrading only one of the servers to the new version and directly a small
+
+portion of the traffic to the staging host later when we are confident to roll
+
+this new version to the entire cluster we can upgrade the remaining servers but
+
+if something went wrong in this new version the impact is going to be much
+
+smaller another load balancing strategy is called the source IP hash when using
+
+round robin consecutive requests from the same user may be directed to
+
+different back-end servers by the load balancer
+
+sometimes though it's desired that the same user will continue the
+
+communication of the same server it initially connected with for example if
+
+a user started a session by putting items into their shopping cart and then
+
+they accidentally refresh their browser or lost the connection they would expect
+
+to find all those items in the shopping cart
+
+once the connection is re-established another example is if a user is
+
+streaming an audio or video file from the server the server may preload or
+
+cache the data locally to improve the performance in that case it's definitely
+
+preferable that the request from the same user would go to the same server
+
+throughout the entire streaming session one way to achieve this session
+
+stickiness is by hashing the IP address of the user and use this hashed value to
+
+determine what server to direct the request since the hash function is
+
+deterministic requests from the same user will always be directed to the same
+
+server in all the techniques so far we assume
+
+that if we spread the requests evenly among the servers the load on them will
+
+also be spread evenly however that is not always the case
+
+not all users are using the system in the same way and not all the requests
+
+require the same amount of resources from our servers and if we get the load
+
+balancing strategy wrong we can have a cascading chain of failures in our
+
+system it can be very hard to recover from
+
+for example if we're using round robin and two of our servers are getting
+
+mostly simple get requests for static pages but the third server is getting a
+
+lot of post requests that require heavy computations and talking to external
+
+services it would quickly get overwhelmed and stop responding to
+
+health checks this in turn would make the load balancer believe that that
+
+server has gone offline so the load balancer will stop sending the server
+
+any more traffic now we end up in a situation where all the requests that
+
+the load balancer is receiving would have to go to the remaining two servers
+
+these remaining servers will also get quickly overwhelmed which would cause
+
+our entire cluster to become unavailable the problem is that neither of the
+
+strategies we mentioned took the actual servers load into account if we have
+
+such a range of resources requirements between the different requests or
+
+distributed system the solution is to take a more active approach in
+
+monitoring the server's load one strategy that takes us closer to that is
+
+the least connection strategy with this strategy servers that already have many
+
+open connections are assumed to be more busy handling requests and therefore
+
+will receive less additional requests than servers that have fewer open
+
+connections the weighted response time strategy
+
+takes advantage of the periodic health check request the load balancer sends to
+
+the servers and measures the time each server takes to respond if the server is
+
+busy handling really requests it would take it longer to respond to those
+
+health checks which would give this server a lower weight in the load
+
+balancing algorithm finally we can take an even more active
+
+approach by installing a special agent program on each of the application
+
+servers this agent background process can
+
+measure the server CPU utilization inbound or outbound network traffic the
+
+number or volume of the disk operations the server's memory utilization or any
+
+other custom metrics those agents can report those metrics in
+
+real-time to the load balancer which will help it make the most informed
+
+decisions regarding the best way to direct the traffic to our application
+
+notes in this lecture we'll learn the variety of load balancing strategies
+
+that our load balancer can use to spread the load in our distributed system we
+
+started with the round-robin which is a very simple but very effective strategy
+
+when the requests coming to our system are very similar in their load on the
+
+application server we learn about the source IP hashing strategy that can
+
+uniformly spread the load like round-robin but also provides the
+
+session stickiness when it's important for the user to hit the same back-end
+
+server for the duration of the session then we learn about the leased
+
+connection and weighted response time strategies are still very simple but
+
+take a more active approach in taking the actual servers load into account and
+
+finally we'll learn about the more involved but also more accurate load
+
+balancing strategy which is based on running an agent program on each
+
+application server which can give the load balancer real-time data to make the
+
+best decision in directing income in traffic
+
+the best load-balancing strategy is different for each distributed system
+
+and in heavily depends on the systems architecture workload and usage pattern
+
+so it's always better to start simple and then incrementally adjust by running
+
+low tests and monitoring traffic in real time way before the system gets to its
+
+full capacity see you soon in the next lecture

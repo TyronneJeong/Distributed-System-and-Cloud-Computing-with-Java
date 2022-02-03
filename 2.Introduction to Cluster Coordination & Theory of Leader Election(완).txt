@@ -1,0 +1,331 @@
+hey guys welcome to another lecture 
+강의에 오신걸 환영 합니다.
+
+
+in this lecture we will start with some basic terminology 
+이번 강의에서는 몇몇 기본 적인 술어를 이용하여 시작 하겠습니다.
+
+and then we'll proceed to learn about zookeeper and start designing our first distributed algorithm 
+그리고 주키퍼를 배우는 과정을 진행 할 것입니다. 그리고 우리의 첫번째 분산 시스템 알고리즘을 디자인 해보겠습니다.
+
+so let's start with learning
+그럼 시작해 봅시다.
+
+two very basic and common terms in distributed systems
+두가지 기본적인 그리고 분산시스템에서 상식적인 용어가 있습니다.
+
+the first one is a node and node is simply a process running on its dedicated machine as part of a distributed system 
+첫번째 것은 node 입니다. 노드는 분산 시스탬 에 하나의 부분처럼 단순 머신에서 동작중인 간단한 프로세스를 말합니다.
+
+this term originally comes from graph theory 
+이 용어는 사실 그레프 이론에서 나온 용어 입니다.
+
+in our case when two nodes have an edge between them that
+이번 케이스의 경우 두개의 노드는 두 노드사이에 하나의 엣지를 가집니다.
+
+means that those two processes can communicate with each other through the network 
+엣지의 의미는 두 프로세스가 네트워크를 통해 서로 소통 가능해짐을 의미합니다.
+
+the second term is a cluster 
+두번째 용어는 클러스터 입니다.
+
+a cluster is nothing more than a collection of nodes connected to each other 
+클러스터는 노드들이 서로 연결되어진 집합보다 많을 수는 없습니다.
+
+the nodes in a cluster are working on the same task and are typically run in the same code 
+그 클러스터내 노드들은 동일한 작업을 합니다. 그리고 일반적으로 동일한 코드가 구동 됩니다.
+
+now it's finally time for us to start designing our first distributed system from scratch which
+이제 scratch 에서 우리의 첫번째 분산 시스템 을 디자인 하기 위한 최종 시간이 되었습니다.
+
+would lead us to talk about the zookeeper 
+(스크래치)우리를 주키퍼에 이야기하도록 안내하는 스크래치
+
+typically when we have a very large amount of data to analyze 
+일반적으로 분석을 위한 많은 량의 데이터가 존재 할때에
+
+or a complex computation to solve 
+또는 복잡한 문제해결하기 위한 연산 작업이 필요할때
+
+we want to hand this task to a cluster of nodes 
+우리는 노드들의 클러스터에 이 작업을 전달하길 원합니다.
+
+the question then is what part of the task is going to be performed by which node
+질문은 어떤 작업의 일부가 어떤 노드에서 동작 할 것인가. 입니다.
+
+after all the biggest benefit of a distributed system is that we can paralyze the work and let each node work independently for that common goal 
+결국 분산 시스템에서의 가작 큰 장점은 작업을 병렬로 처리할 수 있다는 것과 목표를 위해 노드가 독립적으로 동작하도록 하는 것입니다.
+
+we could manually distribute the work and assign each node a separate task but that obviously would not scale 
+우리는 수동으로 작업을 배포하고 노드에 별도의 작업을 할당 할수 있지만 확실히 이건 스케일이 아닙니다.
+
+we could receive thousands of tasks per second so we need a programmatic way to do that distribution
+수천개의 작업을 매초 마다 받을 수 있습니다. 때문에 우리는 앞서 설명한 작업을 분산 시키기 위해 프로그래밍틱한 방법이 필요합니다.
+
+so instead we could manually decide on one special node to be the leader or the master 
+그래서 우리는 수동으로 하는 대신에 하나의 특별한 마스터 노드 또는 노드를 결정 할 수 있습니다.
+
+that master node will be in charge of distributing the work and collecting the results 
+그 (마스터노드) 분산을 담당하는 노드가 될 것입니다. 그리고 결과를 수집하게 될 것입니다.
+
+this is better than our first approach but the problem with that is all nodes can fail at any time including that master node 
+이 방법이 우리가 처음 접근한 방법보다 괜찮습니다. 하지만 문제는 저기서 모든 노드가 실행 할 수 있다는 것입니다. 마스터 노드를 포함해서요,.
+
+
+and in a large distributed system failure is not a question of if but a question of when 
+그리고 큰 규모의 분산 시스템에서의 실패는 여부의 문제가 아니라 언제냐에 대한 문제입니다.
+
+if our leader is not there to distribute the work 
+만약 우리의 리더가 분산작업을 하기 위해 저기에 없거나
+
+or collect the results the entire cluster is decommissioned 
+또는 전체 클러스터의 결과를 수집하는 것은 
+
+so that's still not good enough 
+때문에 이것은 여전히 충분히 좋은 방법은 아닙니다.
+
+the solution is to build an algorithm to allow the nodes to elect their own leader on demand 
+해결방법은 알고리즘을 작성 하는 것입니다. 노드들 스스로 그들의 리더를 선출 하도록 투표를 허용해주는 것입니다.
+
+and make them all wash the leaders health closely 
+그리고 그 선출된 리더 정보를 공유하는 것입니다.
+
+if the master node becomes unavailable the remaining
+만약 노드가 기동 불가능 해질 경우 남은 노드들은 재투표를 통해서
+
+nodes will reelect a new leader and later if the old leader recovers from
+새로운 리더를 선출 합니다. 그리고 이후 이전 리더가 실패에서 복원된 이후에는
+
+its failure once it joins the cluster 
+클러스터내로 다시 합류하는 것입니다.
+
+it should realize that it's not a leader anymore
+이 작업을 통해 리더가 갱신된것을 알려줍니다.
+
+and we join as a regular node to help with the work 
+그리고 이전 마스터 노드를 일반 노드로 가입 시키고 작업을 돕도록 합니다.
+
+that is what we want to achieve but if we think about this architecture for a moment 
+이것이 우리가 달성하기 원하는 것입니다. 하지만 우리가 이러한 아키텍쳐에 관해 잠시 생각하는 동안 
+
+picking a leader in a large group of people each one with their own ego is not a trivial task 
+각자의 인격을 가진 사람로 이루어진 커다란 그룹 에서의 리더 선출은 쉬운 일이 아닙니다.
+
+arriving to a systemic agreement on a single leader among a large group of
+노드들로 이루어진 커다란 그룹사이에 단일 리더 선출에 시스테믹한 합의에 도달 하는 것
+
+nodes where essentially all the nodes are identical as they're running the same code is even a harder task 
+기본적으로 노드들이 동일한 코드들이 동작하는 곳의 노드들 처럼
+
+in addition by default each node is aware
+기본적으로 각 노드들은 노드 자신에 대해서 알고 있습니다. 그리고 나머지 클러스터 파트에는 어떤 것이 있는지
+
+only of itself and has no knowledge about who else is part of its cluster 
+알고 있지 못합니다.
+
+so we need some kind of service registry and service discovery solution 
+때문에 우리는 어떤 종류의 서비스가 필요합니다. 레지스트리와 서비스 복구 솔루션과 같은 서비스.
+
+finally we need some kind of failure detection mechanism as we need a way for nodes to
+최종적으로 우리는 실패 보호 매카니즘을 가진 어떤 종류의 것이 필요합니다.
+
+be notified when a leader becomes unavailable 
+리더가 불용상태가 되었을때 이를 노드들에게 알려줄수 있는 방법 같은 메카니즘을 가진 실패 대비 솔루션이 필요합니다.
+
+which would trigger an automatic leader re-election within the cluster 
+(그 솔루션은) 클러스터내에서 리더를 재선출 하도록 동작됩니다. 
+
+there are many algorithms that can solve all those problems but they're complex and tedious to re-implement
+여기에는 수많은 알고리즘들이 있습니다. 앞서 설명한 모든 문제를 해결할 수 있는. 하지만 이것들은 복잡하고 지루한 내용들입니다.
+
+every single time we want to build a basic distributed system 
+기본적인 분산 시스템을 구성 하는 매 시간 마다.
+
+so the solution we are going to use is an open-source technology called zookeeper
+그래서 우리가 사용하고자 하는 그 해당 솔루션 은 오픈 소스 테크놀로지로 주키퍼 라 불리는 녀석이 있습니다.
+
+butchy zookeeper is a high-performance coordination service designed specifically for distributed systems
+벗치 주키퍼는 분산 시스템에 특화된 고성능 서비스 조정자로 디자인 되어져 있습니다.
+
+it is used by many companies and popular projects such as Kafka Hadoop HBase and many others 
+주키퍼는 많은 회사와 프로젝트(카프타, 하둡, HBASE 등)에서 사용되어 집니다.
+
+it provides us with an abstraction layer that allows us to build higher level algorithms for our cluster 
+주키퍼는 우리들에게 추상화된 레이터를 제공합니다. 고차원적인 알고리즘 제작을 클러스터내에 허용하도록
+
+so what makes zookeeper such a good solution 
+그럼 무엇이 주키퍼를 좋은 솔루션으로 만들었는가 하면은
+
+zookeeper is a distributed system by itself 
+주키퍼는 주키퍼 자체가 분산 시스템입니다.
+
+and by using lower-level algorithms 
+그리고 저수준의 알고리즘을 이용합니다.
+
+it guarantees us high availability and reliability out of the box 
+이것은 우리들에게 박스 박에서 고가용성과 신뢰성을 부여합니다.
+
+in production it typically runs as a cluster of three or more nodes 
+제품상 주키퍼는 기본적으로 3개 또는 그 이상의 노드를 포함하는 클러스터로 동작 합니다.
+
+thanks to this redundancy we can afford to lose a zookeeper node and still keep the system fully functional 
+이 중복성 덕분에 우리는 주키퍼 노드가 사라지더라도 감당할 수 있습니다. 그리고 시스템이 모두 제 기능을 하도록.
+ 
+the way we're going to use zookeeper is instead of having our nodes communicating directly
+우리가 주키퍼를 사용하는 방법은 노드들간 커뮤니케이션을 바로하는 대신에 
+
+with each other to coordinate the work they are going to communicate with the zookeeper servers directly instead 
+작업을 조정하기 위해 서로 노드들이 주키퍼 서버를 통해 통해 소통하는 방식으로 주키퍼를 사용 할 것입니다.
+
+on the other side of the equation zookeeper provides us with a very familiar and easy to use software
+다른 한 편으로는 주키퍼는 우리들에게 아주 친근하고 쉬운 소프트웨어 추상화와 데이터 모델을 제공합니다.
+
+abstraction and data model
+
+
+that looks a lot like a tree and is very similar to a file system 
+여기 보이는 많은 수의 트리는 파일 시스템과 유사합니다.
+
+each element in that tree or virtual file system is called a Z node 
+이 나무의 각 요소들 또는 가상의 파일 시스템을 우리는 Z 노드라고 부릅니다.
+
+Z nodes are kind of a hybrid between a file and a directory 
+Z노드는 파일과 디렉토리의 중간쯤 되는 것입니다.
+
+they can store data inside just like files but they can also have children nodes just like a directory
+Z노드는 데이터를 파일처럼 내부에 저장 할 수 있습니다만 디렉토리 형태의 자식 노드로만 저장 가능 합니다.
+
+there are two types of Z nodes persistent and ephemeral 
+Z노드에는 두가지 유형의 Z노드가 있습니다. 영구와 일시적 영구 Z노드 입니다.
+
+
+persistent Z nodes stay in between sessions 
+영구 Z노드는 어플리케이션과 세션 사이에 유지됩니다.
+
+in other words if our application disconnects from the zookeeper and then reckon X again a persistent Z node
+다른 말로 우리의 어플리케이션이 주키퍼에서 연결이 끊어지고 그리고 재접속을 하는 경우
+
+that was created by our application stays intact with all its children and data and
+영구 Z노드는 해당 어플리케이션이 의해 생성되어진 그대로 자식노드와 데이터로 유지됩니다.
+
+ephemeral Z node is the exact opposite it gets deleted as soon as the application hat created that Z node disconnects from the zookeeper 
+그리고 일시적 Z노드는 어플리케이션이 주키퍼에서 접속이 끊어지자마자 생성해뒀던 데이터가 삭제되는 정반대 개념입니다.
+
+we can already guess that ephemeral Z nodes would be a great tool for us to identify
+우리는 이미 임시 Z노드가 훌륭한 도구가 될 것이라는 걸 짐작 할 수 있습니다.
+
+if another node that created them when done
+만약 또 다른 노드가 임시 Z노드를 생성한 경우 라면요
+
+so now that we know the basics of zookeeper 
+그럼 이제 우리는 주키퍼의 기본에 대해 알았습니다.
+
+
+let's see how we can design
+이제 어떻게 디자인 할 수 있는지를 알아 봅시다.
+
+our first distributed algorithm the leader election the idea is as follows
+우리의 첫번째 분산 알고리즘은 리더 선출 입니다. 아이디어는 다음과 같습니다.
+
+in step one 
+스텝 원.
+
+every node that connects to zookeeper volunteers to become a leader
+주키퍼와 연결된 모든 노드들은 리더로 선출이 가능하다.
+
+each node submits its candidacy by adding a Z node that represents itself under the election parent
+각 노드들은 자신을 나타내는 z node 를 주가하여 후보자로 지원합니다.
+
+since zookeeper maintains a global order 
+주키퍼로부터 관리되는 전역 주문
+
+it can name each Z node according to the order of their addition
+은 각 z노드 들이 추가되는 순서에 따라 이름을 지정 할 수 있습니다.
+
+in step two 
+스텝 투
+
+after each node finishes creating a Z node 
+각 노드들이 Z 노드를 생성한 다음 노드들은 
+
+it would query the current children of the election parent 
+부모 노드 투표에 현재 자녀노드들에게 질의할 것입니다. 
+
+notice that because of that order that
+그리고 해당 건을 알립니다. 왜냐하면 해당 순서
+
+zookeeper provides us each node when querying the children of the election
+(부모 노드 투표의 자녀노드들에게 질의할때 주키퍼가 각 노드들에게 제공한 순서)
+
+parent is guaranteed to see all the Z nodes created prior to its own Z node creation 
+는 모든 이전 생성 z node 들을 볼 수 있도록 보장해줍니다.
+
+so in step three 
+그리고 스텝 쓰리
+
+if the Z node that the current node created is the smallest number 
+만약 현재 생성된 노드가 가장 작은 숫자로 생성된 z node 라면 
+
+it knows that it is now the leader 
+이 노드를 현재 리더라는걸 알게됩니다.
+
+on the other hand 
+다른 의미로
+
+if the Z node that the current node is not the
+만약 현재 z 노드가 가장 작은 숫자가 아니라면, 
+
+smallest then the node knows that is not the leader and it is now waiting for instructions from the elected leader 
+노드는 해당 znode 가 리더가 아니라는걸 알게됩니다. 그리고 리더 투표 지침을 기다리게 됩니다.
+
+this is how we break the symmetry and
+이 3가지가 대칭성을 깨뜨리는 방법이며 리더 노드
+
+arrive to a global agreement on the leader node 
+리더노드에 대한 글로벌 합의에 도달하는 방법입니다.
+
+we'll learn a lot in this lecture 
+이번 강의에서 많은것들을 배웠습니다.
+
+so let's quickly summarize 
+빠르게 요약 해 봅시다.
+
+it we'll learn two new terms 
+우리는 두개의 용어를 배웠습니다.
+
+the node which is a process running on a dedicated machine in a cluster which is a group of
+노드는 전용머신(클러스터)에서 동작 중인 프로세스를 말합니다. 이 클러스터는 동일한 작업을 하는 노드들의 그룹으로 하나의 유닛
+
+nodes working on the same task as a unit 
+과 같습니다. 
+
+we then talked about the challenges of coordinating between different nodes in the distributed system 
+다음 우리는 분산 시스템과 노드 사이의 조정과제에 대해 이야기 하였습니다.
+
+and learn the basics of zookeeper which is a coordination service for distributed systems
+다음으로 분산 시스템을 위한 조정 서비스인 주키퍼의 기본에 대해 배웠습니다. 
+
+primarily zookeeper provides us with a very simple obstruction similar to a tree or a filesystem 
+주로 주키퍼는 우리에게 제공합니다. 트리나 파일 시스템 같은 아주 간단한 구조물을 제공 합니다.
+
+we talked about two types of Z nodes the
+우리는 z 노드에 대한 두가지 유형에 관해 이야기 했습니다.
+
+persistent and the ephemeral and we finish with a three step algorithm for
+영구와 임시 그리고 우리는 분산 시스템내 리더선출의 3가지 유형의 알고리즘을 완성 했습니다.
+
+leader election in a distributed system 
+
+
+in the next lecture we'll learn how to
+다음 강의에서는 어떻게 JAVA API 를 이용하여 주키퍼를 설치하고 연결하는지 
+
+install start and connect to a zookeeper using the Java API and implement the
+또 클러스터내에서 리더 선출 알고리즘을 구련하는지 배워 볼 것입니다.
+
+leader election algorithm in a cluster 
+
+but we'll run it on our own computer
+그리고 우리는 해당 알고리즘을 각 소유의 컴퓨터에서 구동 시켜 볼 것입니다.
+
+I hope you guys are having fun and I will see you in the next lecture

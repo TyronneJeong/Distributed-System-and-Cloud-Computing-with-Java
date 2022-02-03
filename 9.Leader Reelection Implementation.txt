@@ -1,0 +1,247 @@
+hey guys welcome back in this lecture we will finish the leader election
+
+algorithm with the latest upgrade that will make it scalable and resilient to
+
+failures and later we'll put that implementation to the test
+
+by injecting failures into our cluster so before we jump into the code let's
+
+get a quick high-level picture of what we're trying to accomplish let's assume
+
+that we have used the leader election algorithm to choose a special node in
+
+our cluster that cluster can be a compute cluster which receives
+
+computational tasks and those big tasks are then broken into multiple parallel
+
+subtasks and then distributed by the master node in an efficient way the
+
+results are then a synchronously stored in a separate location where the leader
+
+either collects them and sends them back to the source or aggregates them and
+
+sends them to another compute cluster down the pipeline if the master crashes
+
+or becomes temporarily unavailable before it collected the results all that
+
+hard computational work that the entire cluster has performed is potentially
+
+lost and that's because only the leader knows how to aggregate it and where to
+
+send it later another example where a master workers architecture is often
+
+used is in distributed databases on a large scale with millions of users and
+
+billions of records the data is too big to fit on one machine so it is
+
+distributed across the cluster the leader then knows where each piece of
+
+data is stored and how to reroute read and write requests to the appropriate
+
+charts of the data and in this case as well if the leader becomes unavailable
+
+for even a fraction of a second all our data becomes inaccessible to everybody
+
+so in order for our system that we build on top of the master workers
+
+architecture be fault tolerant and available we need our leader election
+
+algorithm to be fault tolerant as well it needs to automatically detect and
+
+recover from failures by reelecting a new leader
+
+in the previous lecture we came up with an addition to our algorithm to make it
+
+fault tolerant by using Watchers by using Watchers each node will watch the
+
+previous nodes ephemeral z node and gets notified if that Z node gets deleted
+
+if the deleted Z node belonged to the leader then the notified node becomes
+
+the leader itself and if the deleted Z no did not belong to the leader then the
+
+notified node simply closes the gap in the chain conceptually in this
+
+configuration our cluster is forming a virtual chain of nodes where each node
+
+is watching another nodes back and protecting the overall system against
+
+the failure so now that we have a clear view of where we're going let's jump
+
+right in and apply this new addition to our existing implementation in the
+
+previous lecture we finished with implementing the volunteer for
+
+leadership method which is called by each node upon connection to zookeeper
+
+and the leader elect method which determines if the current node is the
+
+leader or not the problem was that we called the elect leader only once and if
+
+there were any failures in the cluster during or after the election there was
+
+no way to recover from them so let's go ahead and fix it first of all let's add
+
+an else statement in the elect leader method to take more action when the
+
+current node is not elected to be a leader inside that else statement we
+
+would still print the same message as before but now we also need to find a
+
+predecessor node in the Z node sequence to figure out what z node we need to
+
+watch for failures so we do a fast binary search to find the index of our
+
+own Z nodes name inside the sorted list of children the predecessor index is
+
+going to be our z nodes index minus 1 let's also define the predecessor Z node
+
+named variable to store the name of that Z node we're going to watch and get the
+
+name of that Z node by calling children that get method with the index of the
+
+predecessor Z node as an argument since we know that we are not the leader
+
+at this point we are guaranteed that there is at least one such predecessors
+
+II node so we are safe from any out-of-bounds exceptions or anything
+
+like that now the return type of the exists method is stat so let's define
+
+the predecessor stat variable at the top of the method and call the exists method
+
+on the full path of the Z node we decided to watch and the second argument
+
+is a reference to a watcher object which will get notified if and when the
+
+predecessor Z node gets deleted in the end we simply print out which Z node
+
+we're watching just for visibility now notice that we may have a race condition
+
+here that we need to take care of due to the dynamic nature of the cluster while
+
+we're executing this method and right before we call the exists method the Z
+
+node we're interested in watching may already begun in that case if we call
+
+exists on a-z node that is already gone the return value of the exist method is
+
+going to be null obviously if the Z node gets deleted after we call X this method
+
+then we will get a notification on the watcher so that scenario is already
+
+covered to take care of this edge case we're going to wrap all this logic in a
+
+while loop and repeat it as long as we're not elected to be a leader or
+
+until we found an existing Z node to watch for failures now finally let's
+
+rename the method to re-elect leader and the last action we need to take is
+
+actually add a handler to the event when a Z know that we're watching gets
+
+deleted so let's go to the process method and add a case handler for the no
+
+deleted event in the switch statement inside that case we simply call the
+
+re-elect leader method we just implemented and that's it now let's go
+
+ahead and open the terminal and run the maven clean package command to rebuild
+
+and repackage our application now that we have the implementation
+
+ready let's test it as a local cluster and inject some failures into it to see
+
+how our algorithm handles those failures now let's open for terminal windows
+
+again and run four instances of our application as we can see the node and
+
+the top left was the first to join the cluster with the Z node sequence
+
+18 so it is elected to be the leader we also see that the node on the top right
+
+is right after it in the Z node sequence with the sequence number 19
+
+so it's watching the leader the Z node on the bottom left is the next in the
+
+sequence and it's watching the node on the top right corner and the node on the
+
+right bottom corner is watching the node on the left bottom corner as well so
+
+let's inject our first failure into the cluster by killing the leader as we can
+
+see the node that was watching the leader got notified and took its place
+
+as the new leader also notice that the other two remaining nodes in the cluster
+
+were not bothered by this failure whatsoever
+
+now let's kill that leader by stopping the application and within three seconds
+
+which corresponds to the length of our session timeout zookeeper notified the
+
+bottom left node about that failure and since its sequence number is now the
+
+smallest it is now the leader we can continue this all the way to having one
+
+node left in the cluster which is the node at the bottom right corner now the
+
+best part about this algorithm is that the nose that used to be a leader at
+
+some point may recover from their failure and rejoin the cluster and now
+
+they're forming a new chain of nodes where the top left node is watching the
+
+leader and if we kill the current leader the top left node becomes the leader
+
+again the last feature I want to point out is as we can see in the current
+
+configuration the top right node is watching the leader but it can also die
+
+and what we expect to happen is that the node at the bottom left corner that used
+
+to watch the top right node would take its place and start watching the leader
+
+so let's kill that top right node and we can see that the bottom left node
+
+was notified and it now tube the failed nose responsibilities and is now washing
+
+the leader instead this was a very exciting milestone for us we finished
+
+implementing a very popular useful and important algorithm that comes in many
+
+shapes and forms not only to elect a leader but to reach
+
+any agreement in a distributed cluster we made that algorithm fault tolerant so
+
+any number of nodes including the leader itself can fail at any given moment and
+
+as long as we have at least one node alive our cluster is fully functional
+
+our algorithm is horizontally scalable meaning we can add as many nodes as we
+
+want and since we eliminated any performance bottlenecks such as the herd
+
+effect the algorithm works equally efficiently whether we have four nodes
+
+in a cluster or 4,000 nodes in a cluster full tolerance and horizontal
+
+scalability are two very important properties that every distributed system
+
+or algorithm want to have as a company knowing that your software system is
+
+fault tolerant means you can run your business 24/7 with no interruptions and
+
+you don't have to worry that some hardware failures would bring your
+
+business down and have to wake up an on-call engineer at night to fix it
+
+horizontal scalability means we can grow our business without having to rebuild
+
+our system from scratch once we reach a certain scale so having those two badges
+
+of honor is not a trivial achievement which we will try to repeat for every
+
+distributed system with design in the future
+
+thank you and I will see you in the next lecture

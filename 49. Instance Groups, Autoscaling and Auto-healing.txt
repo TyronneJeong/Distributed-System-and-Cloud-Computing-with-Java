@@ -1,0 +1,245 @@
+welcome back to another lecture on cloud computing
+
+in this lecture we will continue learning distributed systems deployment
+
+on the cloud specifically will alert the launch manage groups of compute
+
+instances that can scale up and down and restart if they become unhealthy all
+
+completely automatically in the previous lecture we'll learn how
+
+to manually run our application on a compute engine instance and then we
+
+automated the process by creating an instance template using the template we
+
+could create a VM in any region and zone however the creation of each VM was
+
+still manual and there was no way for us to create a number of them all at once
+
+in addition each VM was completely independent and unmonitored so if we
+
+launch two VMs and one of them would crash while the other CPU usage we
+
+suddenly shoot through the roof would have to manually address it or risk
+
+having our service unavailable to solve all those problems we can create
+
+instance groups using instance groups we can group and manage a large cluster of
+
+compute instances while monitoring their health adding more instances during peak
+
+traffic and heal in the cluster if we have any failures so without further ado
+
+let's switch to our Google Cloud console in the cloud console we navigate to
+
+instance templates where we can find the instance template we created in the
+
+previous lecture if we click on the menu next to our template in addition to
+
+launching a new single VL from thus template we can also create an instance
+
+group let's call this group US central group since we will launch a cluster of
+
+application instances in the US central region in the location section we're
+
+going to switch from single zone to multiple zones which will distribute our
+
+instances across multiple zones within the region as a reminder different zones
+
+are physically isolated groups of machines within a single region that
+
+have their own power cooling and networking infrastructure and by
+
+distributing our instances across multiple zones we guarantee high
+
+availability even if one of the zones becomes unavailable due to some problem
+
+so we're going to keep the region as US Central and include all the available
+
+zones in the region for our group configuration next in the outer scaling
+
+section we make sure it is enabled and then we choose which policy to use to
+
+the side when the autoscaler needs to add more instances to our cluster or
+
+remove instances from our cluster out of all the options we have here we're going
+
+to stick to the CPU usage as the metric to make the out of scaling decisions the
+
+target CPU utilization is the minimum CPU usage that would trigger the outer
+
+scaler to scale our cluster up in other words if one of our instances in the
+
+group starts consuming more than 60% CPU that would indicate to our outer scaler
+
+that our cluster is running out of CPU capacity and it needs to start adding
+
+more instances next we choose the minimum number of instances in the
+
+cluster to be tuned and the maximum to be 6 the last parameter is the cooldown
+
+period which is the number of seconds the autoscaler should wait
+
+after a VM has started before the outer scaler starts collecting information
+
+from it we will set it to 5 minutes since that's roughly how long it takes
+
+the startup script to run and we want our outer scaler to collect metrics from
+
+our application and not from the installation script that runs at boot
+
+time which might as well consume a lot of CPU and that's it so let's click on
+
+the create button and as we can see in the instance
+
+group tab our new group is being created and is starting with two instances as
+
+that's the minimum we set in our configuration once the status becomes
+
+green we can click on the instance group and find two instances in two different
+
+zones they both have different addresses and different names that reflect the
+
+instance group after we give those two instances a few minutes to finish
+
+executing the startup script and launch our application we can click any of
+
+their IP addresses and observe that they are both running and are ready to accept
+
+traffic from our users now to test our outer scaling policies we need to
+
+generate some load on one of our instances that would consume more than
+
+60% CPU since our application is pretty simple and we don't have that many users
+
+at this point we're going to generate that load artificially using a special
+
+tool so let's SSH to one of our instances once we're connected to our
+
+virtual machine we're going to install the stress application which is
+
+specifically designed for such a stress test and once the application is
+
+installed we can first run the top command and see that at this point
+
+nothing is really consuming any CPU so let's run the stress application and
+
+pass two as the number of CPUs which will run two instances of the stress app
+
+each instance will consume 50% CPU and finally we will set the timeout to 60
+
+seconds now if we run the top command again we see that our instance is
+
+consuming close to 100% CPU which should be enough for our other scaler to think
+
+that our cluster is overwhelmed and needs more instances the assumption that
+
+autoscaler is designed for is that all instances in the group are stateless and
+
+are run in the same computations or getting equal traffic from a load
+
+balancer or an external producer like a message broker so by adding more
+
+instances it should alleviate some of the pressure on the existing instances
+
+and spread it across a larger number of VMs now after we wait for a few minutes
+
+for the outer scaler to kick in we see that it's started adding more instances
+
+gradually and since we generated this load artificially the autoscaler keeps
+
+adding more instances until it reaches the maximum of six as we set in the
+
+configuration now once the stress app shuts down the CPU usage of that
+
+instance should go back down to almost zero so if we wait for a few minutes we
+
+will see that the autoscaler detects that it no longer needs that many
+
+instances and he starts removing them one by one until our cluster shrinks
+
+back to two instances now if we go to the monitoring tab we can clearly see at
+
+the bottom in blue line how the CPU utilization jump to a hundred percent
+
+which triggered the outer scale size to go from two instances all the way to six
+
+and a few minutes after the CPU usage went back down to zero the outer scale
+
+size when gradually back to two now that we'll learn how to launch a
+
+managed group of instances controlled by an out of scaler let's learn how to out
+
+a healer cluster upon failures so let's go back to our instance group
+
+page click on our US central group cluster and click to edit the group at
+
+the bottom of the page under outer healing
+
+we're going to create a health check this health check will be the way for
+
+our other healer to find unhealthy instances will give that health check a
+
+name switch the protocol to HTTP on port 80 and point it to our replication
+
+status endpoint will change the check interval to 5 seconds which means that
+
+our outer heal error will send a request to that endpoint every 5 seconds
+
+the timeout indicates how long to wait for a response healthy threshold is the
+
+number of successful consecutive health checks to consider an instance healthy
+
+and the unhealthy threshold is the number of consecutive unhealthy health
+
+checks to consider an instance unhealthy which will bring down to two inches for
+
+our experiment once the health check was successfully created we're also going to
+
+adjust the initial delay to 30 seconds and save our changes now to test our
+
+other healer we're going to kill one of our application instances on one of our
+
+VMs to do that we're going to connect to one of our compute instances in the
+
+group and once we're connected we're going to find the process ID of the java
+
+virtual machine that is running our application and killed that process so
+
+let's exit this terminal window and verify that the application on that
+
+instance is no longer running this should result in failed health checks
+
+which should be addressed by the outer healer and if we wait enough time we see
+
+that the outer healer started the process of shutting down this particular
+
+VM and then replacing it with a new VM which we can see by the new IP address
+
+that was assigned to it another way to see it is by going to the monitoring
+
+window where we can see that for some time our cluster shrunk to one and now
+
+it is back to two instances so this way we can always be sure that if a failure
+
+happens in our cluster the outer healer will detect it and replace the unhealthy
+
+VM with a new healthy one in a matter of seconds
+
+in this lecture we'll learn a few of the most important features of cloud
+
+computing we'll learn how to launch an entire cluster of multiple instances
+
+distributed across multiple zones for high availability we'll learn to apply
+
+automatic auto scaling policies and to allow our cluster to grow and shrink
+
+depending on the load on our compute instances and finally we'll learn how to
+
+create out of healing health checks to make sure that our cluster recovers from
+
+individual instance failures automatically and keeps our system
+
+stable and available to our users at all times
+
+see you guys in the next lecture

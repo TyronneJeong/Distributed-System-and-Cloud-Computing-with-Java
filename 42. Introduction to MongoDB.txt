@@ -1,0 +1,224 @@
+welcome back after learning a lot of theory on how to
+
+design distributed databases let's practice some of those concepts with a
+
+real distributed database called MongoDB so what is MongoDB and why did we choose
+
+to learn it MongoDB is a scalable no sequel database
+
+there are many databases out there optimized for different data models
+
+workloads and operations so there is no single distributed database to rule them
+
+all and the choice depends on your individual business and infrastructure
+
+needs MongoDB has a very simple data model which means we can focus more on
+
+the distributed database features and practice what we learn right away
+
+without spending too much time on understanding is that a model or query
+
+language despite its simplicity MongoDB is a powerful highly scalable and very
+
+popular distributed database that runs in production by many companies
+
+MongoDB is a no sequel document-oriented database which is a fancy way to say
+
+that instead of storing data in tables we start objects in the database
+
+directly the format in which objects are stored in MongoDB is JSON which makes
+
+our life very easy every object has a unique ID which is auto-generated for us
+
+if we don't provide it ourselves internally MongoDB stores those objects
+
+in a binary format called beasts on but that's just an implementation detail for
+
+us for those of us who come from a sequel database background we can kind
+
+of draw some analogies between sequel terms and MongoDB terms we can think of
+
+a row in a relational database table as an object or document in MongoDB columns
+
+can be thought of as different fields inside the document the primary key in a
+
+sequel database table is equivalent to the ID which one could it be objects
+
+contain and a table is equivalent to a collection of documents in MongoDB now
+
+let's talk briefly about MongoDB these crud operations MongoDB supports the
+
+typical create read update and delete operations on its documents fields and
+
+collections the exception is the document ID which is immutable and
+
+cannot be changed after the creation of the document
+
+for creating a new document we can use either the insert one or insert many to
+
+add one or multiple documents respectively to read from a collection
+
+we can use the find operation which takes a filter to narrow down the
+
+objects or object that we are interested in to update a document or multiple
+
+documents we have the update one and update many that updates one or all the
+
+documents respectively based on the filter and update action we provide the
+
+replace one operation will replace an object that matches the provided filter
+
+with another object provided as the replacement and finally to delete a
+
+single or all the documents in the collection that match a particular
+
+filter we use the delete one and delete many operations respectively MongoDB
+
+provides many more options for querying aggregation and bulk operations but we
+
+will not cover them here at this point so before we move to the more advanced
+
+distributed database features of MongoDB let's conclude this lecture with assured
+
+demo of how to use MongoDB and some of the operations we just learned
+
+to download MongoDB we're going to go to the browser and go to MongoDB official
+
+website installation section then we're going to use the free Community Edition
+
+or we will find a version of MongoDB available for any platform once we
+
+choose our platform represented with all the instructions on how to download
+
+install and configure MongoDB I'm going to skip that step since it's different
+
+for every operating system and it's very easy and well-documented once we have
+
+MongoDB installed on our computer we're going to open our terminal and find the
+
+configuration file location which we can find in the configuration instructions
+
+and varies based on the OS the config file for Mongo the instance is very
+
+simple and has the login section where we can find the path to Mongo D instance
+
+log file the storage section where we can find a place where MongoDB persists
+
+our data and the net section where we can specify the IP address our Mongo the
+
+instance will bind to since right now we're just going to run a single MongoDB
+
+instance we're not going to make any modifications to this file so let's
+
+launch a single instance of MongoDB by typing Mongo D and pointing into the
+
+config files location at this point our MongoDB is running and we're going to
+
+connect to it using a command line client called Mongo once the Mongo
+
+client connects to our Mongo the instance we can type help to see all the
+
+available commands we can use to test our MongoDB instance using show dbe's
+
+we can see what databases we already have in our Mongo the instance and how
+
+much space they are taking to create a new database we can simply type the use
+
+command with a database name and if a database with that name does not exist
+
+yet MongoDB will create it for us so let's
+
+create a database called online school once we create it and switch to our new
+
+database we can use the show collections command to show all the collections
+
+inside this database currently we don't have any collections so the output is
+
+empty now let's create a new collection called students by adding a new student
+
+to this collection and just like with a database
+
+if a collection or forgiving name doesn't exist yet one good EB will
+
+create a new collection for us and add a new element into it in a single command
+
+now if we call the show collections again we can see that we have a new
+
+collection called students we also see that a new student by the name of
+
+Michael was successfully added to the new collection with an auto-generated ID
+
+we can insert a new element with our own ID by setting the underscore ID to a
+
+particular value during the element insertion by calling the find command on
+
+our collection we can see that now we have two students in our collection one
+
+with a unique auto-generated ID and another with an ID that we set
+
+explicitly generally it's a better practice to let
+
+MongoDB generate our IDs for us unless we can guarantee uniqueness of our own
+
+IDs now let's add two more students in one command by using the insert many
+
+operation and pass an array of two student objects we now have four
+
+students in our collection which may be hard to look at using the default single
+
+line / document format so we can use the pretty method to display our JSON
+
+objects in a pretty and more human readable way using the fine command we
+
+can filter on any field and again only the documents we are interested in for
+
+example we can find only the students whose name is Michael and as we can see
+
+we got only one object back that corresponds to Michael's data we can
+
+also do a range query by using the greater than operator and ask for all
+
+the students older than 30 we can even do a more advanced search by applying
+
+the or operator and asking for all the students whose favorite color is either
+
+blue or black this shows us how we can even query inside an array field
+
+sometimes we don't want all the results of a query but just a limited number of
+
+results for that we can use the limit method now we actually just found out
+
+that we put Jackie's age incorrectly and her real age is not 35 but 32 so we can
+
+use the update 1 method to find a student whose name is Jackie and using
+
+the set operator we set her age to 32 and if we look at
+
+her document now we see that now she has the correct age in the database after
+
+looking at our school's policy it turns out that the minimum age to enroll is
+
+actually 18 and we have one student Mary who is only five years old so we're
+
+going to use the delete many operation and delete all the students whose age is
+
+less than eighteen and as we can see after this operation Mary was
+
+successfully removed from our collection in this lecture we'll learn about
+
+MongoDB which is a very popular document oriented no sequel distributed database
+
+we got familiar with MongoDB terminology and data model after that we learn about
+
+the basic crud operation MongoDB provides to us and later we got some
+
+practice in launching a new mangu D instance on our local computer finally
+
+we use the Mongo command-line client tool to connect or m1 could be instance
+
+and using that tool with practice creating a new database a new collection
+
+and how to insert read update and delete documents in MongoDB
+
+I will see you soon in the next lecture
+

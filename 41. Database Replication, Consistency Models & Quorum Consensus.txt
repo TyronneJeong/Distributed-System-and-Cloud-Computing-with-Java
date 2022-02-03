@@ -1,0 +1,280 @@
+welcome back everyone in this lecture we're going to learn
+
+about database replication after getting the motivation for database replication
+
+we'll talk about two replicated database architectures later we'll talk about
+
+different database consistency models and finally we'll talk about the quorum
+
+consensus algorithm so let's start talking about why we want to replicate
+
+our database first let's make sure there is no
+
+confusion between data charting and replication data sharding is splitting
+
+the data and placing each chunk on a different machine data replication on
+
+the other hand implies creating an identical copy of all the data and
+
+placing each copy on a different machine so replication creates redundancy but
+
+sharding does not the first and biggest reason we want to
+
+replicate our data in a distributed database is to achieve high availability
+
+if we store all our data on a single machine and the communication to that
+
+machine breaks down for example due to a router failure our business will not be
+
+able to operate until that node becomes available again so if we keep a copy of
+
+all our data on a separate machine then if the main database instance or master
+
+is unavailable we can still have access to the data residing on the replicas and
+
+our business can continue operating the second reason is full tolerance if
+
+this time it's not the router that failed by the database instance disk or
+
+CPU then having the data in one place will result in a complete and
+
+unrecoverable data loss so having a copy of our data on a different machine
+
+serves as a backup to ensure we never lose any of our data
+
+the third reason for replication is to achieve scalability and performance data
+
+replication particularly shines in a read intensive workload for example if
+
+we have a relatively small data set that can fit in a single instance but we have
+
+a very large number of clients that you read data from the database a single
+
+node will just not be able to handle such a large number of concurrent reads
+
+so through full data replication the load on each replica is much smaller and
+
+we can support a much higher throughput and number of concurrent readers
+
+handling concurrent write store replicated database is a bit more
+
+complex and you will see why in a few moments so let's look at a few
+
+replicated database architectures starting with a symbol master slave
+
+approach in the master/slave architecture all the
+
+right operations go to the master and the read operations go to the slave
+
+every right operation to the master is propagated to the slave so that the
+
+slave always contains an identical copy of the data on the master and if the
+
+master fails for any reason the slave is ready to take over and assume the role
+
+of the master to keep the system running at some point a single writer is no
+
+longer enough for us so we move to the master master architecture where each
+
+node can take both reads and writes and every write is propagated to other nodes
+
+for consistency in this architecture all the nodes are identical in their role
+
+and we can grow our database cluster to as many nodes as necessary however even
+
+the simple two node master slave architecture already poses a few
+
+challenges for us if a particular client writes to the
+
+master and gets an acknowledgement before the write was propagated to the
+
+replica and then reads the same record immediately it will see an old value the
+
+situation makes our database temporarily inconsistent however eventually the new
+
+value will be propagated to all the replicas and our database will become
+
+consistent again this consistency model is called eventual consistency in this
+
+model if no further updates are made eventually all the readers will have
+
+access to the newest data however temporarily some readers may see stale
+
+data eventual consistency usually provides us with lower latency and
+
+higher availability since we can respond to reads and acknowledged writes without
+
+waiting in an update to propagate to the entire cluster eventual consistency is a
+
+good choice for systems that do not need to have the most up-to-date data across
+
+the board for example if we post something on our social media and some
+
+of our friends see it immediately and some don't that's a totally acceptable
+
+scenario another good example is for analytics for example in an online store
+
+where users rate and review products it's okay if some users temporarily will
+
+not see the most up-to-date rating or number of reviews intuitively we can
+
+force through consistency by forcing the writer to wait until the master finishes
+
+replicating the new value to the slave before the writer can assume that that
+
+right was successful that guarantee strict consistency but slows down the
+
+right operations in a strict consistency the writer will
+
+not get an acknowledgement that a write is successful until we can guarantee
+
+that all the readers will see the new data as we saw before this slows down
+
+our operations in this case the writes which also limits our availability if at
+
+the time of the write not all the replicas are accessible on the other
+
+hand straight consistency is essential for systems where we absolutely need a
+
+consistent picture of our data across all the services for example financial
+
+data like the users account balance the number of items in our stores inventory
+
+or data about which seats are already taken in a concert absolutely have to be
+
+strictly consistent across all the readers
+
+we were able to four strict consistency in a simple to know the master/slave
+
+architecture however how would we do it in a fully distributed and symmetric
+
+master master architecture for each node can take both reads and writes
+
+of course we can try to force each right to wait until the data propagates to all
+
+the nodes as before but that is very problematic in the best scenario it is
+
+just going to be a very slow right but in the worst scenario the right will
+
+time out if just one of our many nodes is currently unavailable
+
+so a better and more methodical solution to guarantee strict consistency is using
+
+the quorum consensus first each record in our database in
+
+addition to the key and the records data will also have a version every time we
+
+update a record we increment the version to make sure we can distinguish between
+
+an older record and a newer record now let's define our as the minimum
+
+number of nodes a reader needs to read from and W is the minimum number of
+
+nodes a writer needs to write to finally a let's define n to be the total number
+
+of nodes we have in our cluster so with the quorum consensus protocol dictates
+
+is if we choose R in W such that their sum is strictly greater than the number
+
+of nodes we have in the cluster we are guaranteed to have a straight
+
+consistency in our distributed database for example if the number of nodes in
+
+our cluster is 5 and we choose the minimum number of nodes to read from to
+
+be 3 and the minimum number of nodes to write to also to be 3 then we are
+
+guaranteed to have strict consistency because 3 plus 3 is strictly greater
+
+than 5 however if we choose the minimum number of nodes to read from to be 2
+
+then we will only have eventual consistency in our database since 2 plus
+
+3 is not strictly greater than 5 the idea of quorum is actually very
+
+simple and it simply guarantees an overlap between the reeds and the right
+
+let's run through an example of R and W equals three with a cluster of five
+
+nodes a client wants to update the record X to a new value of 20 so it
+
+needs to pick three nodes to write to so once it writes to the quorum of three
+
+nodes and updates the version of the record on those nodes the write
+
+operation is considered successful now if a reader wants to read from record
+
+eggs since which shows the values R and W so that their sum is greater than n in
+
+the most unlucky Pig of a read quorum of three the reader is still guaranteed to
+
+have an overlap with a recent write operation now when the reader gets the
+
+values and the versions of the records the reader can see that the values do
+
+not match at this point the reader can see that the version of X equals 20 is
+
+more recent than the version of X equals 10 which must mean that 20 is the most
+
+up-to-date value of X a great part about the quorum formula is
+
+that we still have the flexibility in choosing R and W to optimize for
+
+different workloads for example if we want to optimize our database for reads
+
+we can choose R 2 B 2 and W 2 B 4 with this choice which still guarantee
+
+string consistency and in the worst case we still have an overlap between past
+
+writes and newer reads however now the readers need to pick
+
+only two nodes to read from which makes the readers faster on the expense of the
+
+slower writes that now need to write to at least four different notes if we pick
+
+R and W right we even have high availability since we have room for some
+
+nodes to fail for example if we use the same values for R and W as before the
+
+read client still have enough nodes to choose from to achieve a read quorum of
+
+two and the right clients still have enough nodes to pick for a write quorum
+
+of four however if we go too far with optimizing for reads for example and we
+
+choose the read quorum to be one that forces us to have at least five write
+
+nodes in the right quorum that allows a read client to read from only one known
+
+and get the most up-to-date value but does not leave us any room for notes to
+
+fail since a successful write needs the entire cluster to be available
+
+and this lecture we'll learn about data replication in distributed databases
+
+we'll learn about the simple master slave architecture where write
+
+operations go only to one node and read operations go to the slave replicas we
+
+also learned about the master master architecture where all the nodes are
+
+identical and both read and write operations can go to any of the nodes
+
+then we'll learn about the strict and eventual consistency models and finally
+
+we'll learn how to use the quorum consensus to guarantee string
+
+consistency in any replication architecture and how to adjust the read
+
+and write quorums to optimize for reads or writes and still allow high
+
+availability in our cluster one thing to point out is when building
+
+a distributed database we don't need to choose between replication and sharding
+
+and in reality most distributed databases use a combination of both
+
+sharding and replication to achieve high scalability availability and fault
+
+tolerance see you guys in the next lecture
+

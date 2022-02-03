@@ -1,0 +1,207 @@
+hey everyone welcome back to another lecture
+
+in this lecture we're going to learn how to build a Kafka producer using Kafka's
+
+Java API in particular we will explore a few ways to send records to distribute
+
+Kafka topic so without further ado let's jump right to our terminal
+
+so let's start for clean but similar setup of a single zookeeper instance and
+
+launched three Kafka brokers so we can have a fully distributed topic we can
+
+send messages to after we have our Kafka cluster ready let's open a new window
+
+and create a new topic with a replication factor of two three
+
+partitions and name the topic events now let's take a look at the topic structure
+
+within Kafka and as we can see each partition has its own leader and is
+
+replicated by one more broker in addition to the partition leader itself
+
+now let's open a new maven project and start with adding Kafka clients into our
+
+dependency section we will also add the login libraries that Kafka clients needs
+
+now the first method we're going to implement is the create Kafka producer
+
+which will take the bootstrap servers as an argument and create a fully
+
+configured Kafka producer for us to configure a Kafka producer we need to
+
+create a properties object which is just a key value pairs container we can pass
+
+to the Kafka producer the first property we're going to add is the bootstrap
+
+server's config which is a comma separated list of Kafka addresses our
+
+producers will use to establish the initial connection to the entire Kafka
+
+cluster the second property is the client ID config which is just a human
+
+readable name for our producer which is used mainly for logging purposes Kafka
+
+allows us to use basically any Java object as a key and any Java object of
+
+any type as a value however for each type of key and value we need to tell
+
+the Kafka library how to serialize that object to a binary format that can be
+
+sent over the network so since we are going to create a producer of keys of
+
+type long and values of type string we're going to set the third property
+
+which is the key serializer class to long serializer
+
+and similarly we will set the value serializer class to the name of the
+
+string serializer class and that's it our configuration properties are ready
+
+so we are going to create a Kafka producer object pass the properties into
+
+its constructor and return the producer from the method the second method we are
+
+going to implement is the produce messages which will take the number of
+
+messages we want to produce in the Kafka producer as arguments using the Smith
+
+we will experiment with a few ways to produce messages to Kafka so first let's
+
+define the partition we're going to send messages to then we'll create a loop
+
+which will have as many iterations as the number of messages in each iteration
+
+we're going to define the key as the iteration index then we're going to
+
+define the value as our event and also we're going to create a timestamp which
+
+we can pass with the record finally we're going to create the producer
+
+record which has quite a few overloads which will define how this record is
+
+going to be published to Kafka the first and mandatory argument is the Kafka
+
+topic so let's define the Kafka topic we're going to send messages to and pass
+
+that topic name to the producer record then we're going to pass the partition
+
+number the timestamp the key and the value after record is sent to Kafka we
+
+get back a record metadata object which tells us where that record has landed in
+
+our distributed Kafka topic so let's user Kafka producer send method to send
+
+the record and call the get method on the return object to get that record
+
+metadata after the record has been sent and we received its metadata we're going
+
+to print out the records original key and value as well as the partition and
+
+the offset within that partition with the record was sent by the Kafka
+
+producer so now with all those methods
+
+implemented we're ready to test our Kafka producer
+
+first we're going to define our bootstrap servers and this time we're
+
+going to use all our server addresses this way if one of the servers goes down
+
+our producer will still have two more bootstrap servers which would be the
+
+Gateway to connect to the rest of the kafka cluster now in the main method
+
+were first going to create our Kafka producer then call our produce messages
+
+method to produce ten messages to the events topic we will wrap that method in
+
+a try and catch block and in the end we will flush and close the producer to
+
+make sure all our outstanding messages have been sent and that's it our Kafka
+
+producer is now ready so let's run the application and as we can see in the
+
+console we successfully published ten messages tour events Kafka topic since
+
+we use the partition number explicitly all the records ended up in the same
+
+partition partition number zero we also see that the offsets are all consecutive
+
+which tells us that those events are now stored in that partition in the same
+
+order they were published now if we change the partition number to one and
+
+rerun the application we see that now all the events were published to
+
+partition number one and the offsets in that partition go from zero to nine
+
+which means the events are also in the same order within that partition however
+
+they have no or the relationship to the messages in partition zero we'll
+
+republish the previous messages now let's go back to our code and use
+
+another overload of the producer record where we do not specify the partition
+
+explicitly in this case a hash function is going to be applied on the key which
+
+will determine which partition the event will go to now let's run the application
+
+and as we can see for example message zero was directed to partition to butt
+
+messages one and two were sent to partition zero and that's based on the
+
+results of the hash function applied on the records keys generally using the key
+
+to determine the target partition is a better approach than choosing the
+
+partition explicitly because when using the key we don't need to know any
+
+specifics of the topic structure and how many partitions it has so we can run a
+
+producer that is less coupled to the topic configuration now in some cases
+
+having a key and a value just doesn't make any logical sense when
+
+we have a user event for example we can use the user ID as the key but when we
+
+have some kind of global event that maybe already has a lot of information
+
+we may not have any key for it in this case we can publish the event with no
+
+key and the kafka producer will simply use round robin to the site to which
+
+partition is going to send the messages to so let's remove the key from the
+
+producer record parameters and rerun the application and as we can see the
+
+messages were sent in a round robin fashion alternating between partition 2
+
+0 and 1 in this lecture we'll learn how to build a kafka producer using the
+
+Kafka's Java API we learn how to configure a kafka producer
+
+programmatically then we learn a few ways to send messages to a distributed
+
+Kafka topic the first way was to send messages directly to a particular
+
+partition which is great if we don't want to rely on the keys hash value and
+
+when to enforce ordering within a set of messages
+
+the second way was using the key and the fur in the partition choice to Kafka
+
+based on the internal hash function in this way with a couple ourselves from
+
+the topic configuration and rely on the statistical distribution of keys to
+
+distribute the load among the partitions and finally the third way where keys may
+
+not exist or we simply want to send messages in a round-robin strategy to
+
+our topic partition in this case we omitted the keys from the records and
+
+pass the records only with values to the producer
+
+see you guys soon

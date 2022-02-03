@@ -1,0 +1,309 @@
+welcome back to another lecture on HTTP now we're ready to implement a fully
+
+functional HTTP server so in this lecture we will build one using the
+
+standard Java libraries we will also learn how to parse and create custom
+
+headers and how to send a response back to the client in the second part of the
+
+lecture we will learn how to use Kerala which is an all-purpose command line
+
+HTTP client tool which we will use to test our HTTP server so let's start with
+
+implementing our HTTP server the HTTP server that we're going to build and
+
+will have two endpoints one is called status which will respond to get
+
+requests and report about the health of our application the second endpoint will
+
+be under the task relative path and we'll take post requests containing a
+
+list of potentially large numbers our server will calculate the product of the
+
+numbers and send the results back to the client we can imagine a scenario where
+
+we have a distributed system performing a complex scientific simulation which
+
+may involve calculating the product of a large number of integers so an HTTP
+
+client can split that list of numbers and send them to potentially more
+
+powerful services to calculate the result in parallel and combine the
+
+results we'll start with a blank project for now
+
+to get familiar with the networking concepts so let's create the web server
+
+class at the top of the class we'll define two endpoints a task endpoint
+
+which will be the entry point for requests that send tasks to our server
+
+and the Status endpoint which will be the entry point for checking the health
+
+of our server we will also need to store the port on which our HTTP server will
+
+listen as well as the HTTP server itself in the constructor will pass the port
+
+into the web server which can be passed into our application externally or
+
+defined somewhere statically in a configuration file now we'll create a
+
+start server method which will initialize our server setup all the
+
+endpoints and started the first thing we're going to do is create a server by
+
+calling the HTTP server create method which takes the address and the port on
+
+which it's going to listen as well as the size of the backlog the backlog size
+
+is the number of requests we allow our HTTP server to keep in the queue if at
+
+the moment there aren't enough threads or compute
+
+power to process them specifying zero for the backlog size we'll simply use
+
+the system default the next step after we created the HTTP server is to define
+
+our endpoints to create an endpoint for the status check we call the create
+
+context method with the status relative path as the argument and similarly we
+
+create the context for the task endpoint to handle the incoming tasks to our
+
+server now we need to actually create the methods that can handle those
+
+incoming requests we start with the handle status check request method it
+
+takes an HTTP exchange argument which encapsulate everything about the current
+
+HTTP transaction between the current server and the client the first action
+
+we need to take inside the method is to check if the HTTP request method is in
+
+fact a get method just like we expect and if it is not we close the
+
+transaction and reject the request otherwise we proceed to create in the
+
+response message as a string then we send that string in the response body
+
+using the send response method which will implement separately so we can
+
+reuse it in other handlers the send response method will
+
+take a byte array to pass into the response message body as well as the
+
+HTTP exchange argument representing the transaction the first thing we're going
+
+to do in this method is set the HTTP status code which in the case of a
+
+success is 200 as we mentioned in the previous lecture in the second argument
+
+we're going to assign the size of our message body into the content length
+
+header when the client receives that header it will know exactly how many
+
+bytes to read from the network after that we get the handle to the response
+
+body output stream we write a response message into that stream and finally we
+
+flush and close the stream to for sending the response back to the client
+
+now that we're done with implementing the handling of the status request let's
+
+go back to the start server method and send the handler of the status context
+
+to that method we just implemented to tie the handler implementation to the
+
+Status endpoint now in a similar way let's define the handler for the task
+
+endpoint which also takes the HTTP exchange as an argument it represents
+
+that transaction between the HTTP server and client also similarly to the status
+
+handler we're going to check that the HTTP request method is post since the
+
+task handler expects a message body from the client as well as performing a
+
+lengthy computation if the method is indeed a post then we want to inspect a
+
+few optional custom headers we will define as an exercise first let's get
+
+the headers from the request then we're going to look for the presence of the X
+
+test custom header and get the first value passed inside that header if the
+
+value of the header is true then we won't actually perform any computation
+
+and instead create a dummy test response and send it back to the client this can
+
+be useful for testing our endpoint without actually performing real and
+
+potentially long computations if we're not in a test mode and the next header
+
+we're going to look for is the X debug header if this custom header is set to
+
+true then we mark that we're in a debug mode for that request and we can
+
+potentially collect a lot of debug information
+
+about every step in our computation in this case we're simply going to capture
+
+the length of our computation in nanoseconds so let's get the timestamp
+
+of the start of our operation then read the request by its from the request
+
+message body then we're going to calculate the result by calling the
+
+calculate response which we'll implement in a moment at this point we take
+
+another timestamp to mark the end of our operation and if we are in fact in a
+
+debug mode we create a debug message which we assign to the custom header
+
+called X debug in phone and put that timing
+
+information we collected as a value in the end we send all those headers and
+
+the response back to the client the one thing that we're missing at this point
+
+is performing the actual operation as the result of the post request so let's
+
+implement the calculation method which takes the request byte array as an
+
+argument then we convert that pilot array into a string and then we break
+
+the string by a comma to get the list of numbers the input numbers as well as the
+
+result can be very big so we're going to store the result inside a big integer
+
+finally we iterate over all the numbers convert each string representation of
+
+the number into a big integer and multiply that integer by the cumulative
+
+result we have so far in the end we create the result message and convert it
+
+back into a byte array we can store inside the response message body at this
+
+point our task request handler is ready so we go back to the start server method
+
+and assign that handler to the task context so that that method will handle
+
+the request to the task endpoint at this point we have all our endpoints set up
+
+correctly so all we need is to allocate some threads for the HTTP server so it
+
+can handle multiple requests at the time and finally we call the start method to
+
+start listening on the given port to test our implementation we'll create the
+
+main method inside the main method we define the default port on which the
+
+server will listen but if the port was passed into our replication as an
+
+argument will parse the port from the argument then we create the web server
+
+instance and simply started also let's print out that all the setup
+
+was successful and on which port the server is listening and that's it we are
+
+done with implementing a fully functional HTTP server now to test our
+
+HTTP server implementation we're going to use a very popular standalone HTTP
+
+client command line tool hold curl with coral we can test our HTTP server even
+
+before we build our HTTP client or simply tested in isolation karela has a
+
+lot of features and arguments we can pass but the ones we're going to use in
+
+this lecture are the request argument to specify the HTTP method we're going to
+
+use the header argument of which we can set the specific headers we want to send
+
+to the server also we have the verbose argument to get the full information
+
+about the contents of the request and the response in the transaction when
+
+applicable we can also use the data argument to send any data to the HTTP
+
+server inside the request message body and finally we need to pass the address
+
+of the HTTP server which always comes in the end of the command
+
+so first let's build and package our project with the maven clean package
+
+command and once the building of the project is complete let's switch to our
+
+terminal at the top window and we're going to start the webserver on the port
+
+8081 at the bottom window were first going to
+
+type curl then use the request argument to specify that we want to send a get
+
+request and finally the host port and relative path which in this case is
+
+going to be localhost port 8081 and use something as the relative path which we
+
+did not define any handler for so we expect to get a failure and as we
+
+learned in the previous lecture the requests curl sent to the server
+
+contains to get as the request method something as the relative path and the
+
+HTTP 1.1 as the default protocol version then we have a few standard headers that
+
+curl is setting for us and in the response we get the same protocol
+
+version with the status quo with 404 if we recall from the previous lecture a
+
+400 status codes group indicates a client error which is exactly what
+
+happened here as we send a request to an endpoint and doesn't exist now let's
+
+clear the screen and send a better request this time to the Status endpoint
+
+and as we can see this time we get the status code 200 which belongs to the
+
+success group with the status message okay in the end of the response we can
+
+see the response message body that we sent from the server it indicates that
+
+our server is healthy now let's clear the screen again and send a post request
+
+with some data to the task endpoint if we inspect the transaction we can see
+
+the content length header in the request telling the server how much memory to
+
+allocate for the request message body we can also see our custom response message
+
+with the result of the multiplication which was performed by the task request
+
+handler now let's test our custom headers let's modify the previous
+
+request by adding the ex test header with the value true and as we can see
+
+this time the server did not perform the real complex computation but instead
+
+sent us a quick dummy response finally let's replace the ex test header
+
+of the ex debug header and as we can see this time we got a response with an
+
+extra custom header which tells us the exact time that the server took to
+
+perform the complex computation this information can be very important if we
+
+have a large distributed system and we suddenly start experiencing high
+
+latencies somewhere along the chain of services let's quickly summarize what we
+
+learned in this lecture we learn how to implement a basic but fully functional
+
+HTTP server it can handle get requests as well as post requests with a message
+
+buddy will learn how to both send and receive custom headers and we also learn
+
+how to use curl to send HTTP requests to any server and inspect the entire
+
+transaction between the two entities in the next lecture will complete the
+
+HTTP discussion with the implementation of the HTTP client see you all soon

@@ -1,0 +1,121 @@
+hey guys welcome back to another lecture in this lecture we will implement the
+
+leader election algorithm and then package and test our distributed
+
+application in the previous lecture we implemented all the logic for handling
+
+connection and disconnection from zookeeper now let's jump right in and
+
+proceed with the implementation of the leader election algorithm let's add the
+
+volunteer for leadership method inside that method we first define the Z
+
+node prefix which is going to be the election namespace /c underscore C
+
+stands for candidate then we call zookeeper create method which takes Z
+
+node prefix then the data we want to put inside the Z node which is an empty byte
+
+array in this case the next parameter is the access control list which we don't
+
+care about at this point so we simply pass the open unsafe enum value and
+
+finally the Z node creation mode is going to be ephemeral sequential that
+
+means if we disconnect from zookeeper the Z node is going to be deleted and
+
+the name of the Z node is going to be appended with the sequence number
+
+depending on the order of addition of Z nodes under the election / NZ node just
+
+like we discussed in the previous lecture
+
+the return value from the create method is the Z node full path and name so
+
+let's print it out let's extract only the Z nodes name without the path and
+
+store it in a class member variable the next method we're going to define is
+
+the elect leader method in the elect leader method we're going
+
+to call the get children method to get the children Z nodes of the elections
+
+you note the get children returns a list of Z node names that are the children of
+
+that particular Z node now to find out if our Z node is the smallest in the
+
+list we need to simply sort that list lexicographically in an ascending order
+
+for that we're simply going to call the collections dot sort method after the
+
+sorting the smallest genome sequence is going to simply be the first element in
+
+the list now all we need to do to figure out if we're the leader or not is simply
+
+compare the Z nodes name with the first Z node in that sorted list if they are
+
+the same then we are the leader so we'll print that out and return from
+
+the method otherwise we'll print out that we are not the leader
+
+and we also know exactly who the leader is so let's print that out as well
+
+the last thing we need to do is call the volunteer for leadership and the elected
+
+inside the main method and that's it we are done with the implementation before
+
+we can test our algorithm we need to package our app remember this program is
+
+meant to be deployed on a cluster and run as a distributed system so we need
+
+to package it as a standalone jar file which would include all its dependencies
+
+so we can easily deploy it and run it to help with the packaging we're going to
+
+add one piece of configuration into our pom dot XML file which will simply tell
+
+me when to package our code for that we're simply going to add a single maven
+
+plug-in called maven assembly the only thing that we need to care about here is
+
+the main class XML tag which points to the class where our main thread is
+
+located in our case it's the leader election class now all we need to do is
+
+open the terminal and run the maven clean package command which will build
+
+and package all our code together with its dependencies in a single executable
+
+jar file after the build has completed we can find the leader election jar with
+
+dependencies file inside the target directory
+
+now I've opened four windows side-by-side so we can run four
+
+instances of our application and see how it works as we can see the first
+
+instance on the top-left corner was the first one to join zookeeper so it
+
+created the smallest Z node and it also detected that it is the leader the rest
+
+of the instances detected that they are not the leader and also indicate that
+
+they know who the leader is now they are simply sitting and waiting for
+
+instructions and tasks from the leader before we move on to the next part of
+
+the algorithm which is failure detection and leader re-election if the leader
+
+node dies let's summarize what we learned so far in this lecture we
+
+successfully implemented the first part of the leader election distributed
+
+algorithm will learn to package our application with all its dependencies
+
+which will make it easy for us to deploy it on any computer and finally we tested
+
+our distributed algorithm locally as a group of application instances and they
+
+successfully elected a leader to coordinate the work see you all soon in
+
+the next lecture

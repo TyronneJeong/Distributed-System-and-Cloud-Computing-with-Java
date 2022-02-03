@@ -1,0 +1,239 @@
+welcome back everyone we now dashed upon every aspect and
+
+layer of a typical distributed system and we can design and build a scalable
+
+and reliable distributed system for any purpose so at this point the only thing
+
+we're missing is the infrastructure to actually deploy our system on this
+
+brings us to the cloud so in this lecture we'll get an introduction to
+
+cloud computing we will learn what the cloud actually is and what benefits we
+
+get by deploying our distributed system on the cloud infrastructure finally we
+
+will learn how cloud services are organized and get familiar with a few
+
+fundamental cloud computing building blocks so let's start with an
+
+introduction to the cloud before cloud computing was available if
+
+we wanted to deploy a distributed system to provide a service to our clients we
+
+had only one option we had to buy or rent a server room and buy and set up
+
+all the infrastructure ourselves or hire someone else to do it after making the
+
+initial big investment and infrastructure we'd have to have
+
+permanent staff to maintain and upgrade all those servers routers load balancers
+
+and so on not too long ago all companies big or small had to do this and a few
+
+large companies came to the conclusion that since everyone basically needs the
+
+same building blocks to run their distributed systems infrastructure
+
+should be treated as a utility similar to water or electricity in our homes so
+
+Amazon Google and Microsoft after first creating internal api's for their
+
+internal teams to access this infrastructure externalize those api's
+
+in the form of cloud offering called infrastructure as a service in addition
+
+to infrastructure as a service they also launched a lot of features in a form of
+
+platform as a service that provides a higher level abstraction for developers
+
+essentially those companies have made their compute power and internal
+
+infrastructure available for us to rent on demand and by deploying our
+
+distributed system on the cloud we are paying just for what we use thanks to
+
+the cloud services we can get our startup up and running within minutes
+
+without the need for large initial investments upfront so basically the
+
+cloud vendors are focusing on the infrastructure while we can focus on our
+
+business logic and our system design and everybody wins
+
+today there are many cloud vendors offering hundreds of features with
+
+easy-to-use user interfaces high quality documentation and rock-bottom prices
+
+their products are constantly changing so we're going to cover just the
+
+essential components that are offered by most cloud vendors though possibly by
+
+different names and are enough to deploy a distributed system at any scale so
+
+let's talk about the basic concepts and fundamental building blocks of cloud
+
+computing every cloud vendor provides
+
+infrastructure services in multiple regions these are physical geographical
+
+regions all across the globe the different regions are completely
+
+isolated from each other and that's by design as a client of one of the cloud
+
+vendors we can employ our services in one or more regions each of those
+
+regions has one or multiple data centers which are large buildings containing
+
+thousands upon thousands of servers data replication and configuration
+
+sharing between regions is limited and typically each region requires its own
+
+configuration but this isolation actually provides the following benefits
+
+first it provides fault tolerance and stability in case of a natural disaster
+
+if one of the countries or regions is hit by a storm or an earthquake for
+
+example and the entire region loses power or connection to the internet all
+
+the other clients can fall back to our services in a different region having
+
+our service in different geographical regions makes it easier to comply with
+
+local rules and regulations some countries have different privacy
+
+security and censorship laws than others some countries don't even allow storing
+
+their users data in servers outside their borders so having slightly custom
+
+logic in each region helps us provide comparable and compliant services based
+
+on the geographical location another benefit is security isolation if one of
+
+their regions is misconfigured has some kind of data corruption or is attacked
+
+by hackers the other regions remain untouched finally if we distribute our
+
+system globally we can provide everyone with low latency something we cannot
+
+achieve if we deploy our system only in one location do the simple laws of
+
+physics one thing to point out is data replication across regions is possible
+
+however it usually incurs higher additional costs is typically slower and
+
+more complex farther each region is broken down into
+
+separate zones those zones are also completely isolated in terms of power
+
+cooling and networking but are connected to each other within the same region by
+
+a high-speed connection as a client running our distributed system on the
+
+cloud we can deploy our servers or database instances in multiple zones to
+
+provide high availability and fault tolerance within that particular region
+
+a typical deployment can have multiple replicas of a database in different
+
+zones and multiple instances of a service on servers in different zones
+
+running behind a load balancer which typically also has multiple nodes in
+
+each zone finally in each region we have many infrastructure building blocks that
+
+we can launch within a few clicks of a button so let's talk about a few of them
+
+one of the very basic services provided in each region are compute nodes
+
+typically run in virtual machines coming in different sizes and configurations
+
+just with those compute nodes we can already build our own distributed system
+
+very easily and quickly by deploying the components we need on each node and
+
+connecting them together another fundamental feature is out of scaling
+
+which allows us to intelligently and automatically adjust our compute
+
+capacity and maintain steady performance for us for the lowest cost at all times
+
+using our scaling we will run and pay for just as many compute instances as we
+
+need no more and no less to take advantage of our scaling we need
+
+to set up triggers based on performance metrics like CPU usage memory
+
+utilization or incoming traffic and the outer scaler will automatically add more
+
+capacity when needed and reduce the capacity when possible to save us money
+
+another fundamental building block is the load balancer the cloud load
+
+balancer provides us with a unified IP for our service load balancing
+
+capabilities failure detection and monitoring just like any load balancer
+
+in addition to our ability to store our data on the compute nodes cloud vendors
+
+also provide advanced proprietary storage solutions those range from ultra
+
+cheap memory access storage tiers used primarily for long-term data backup to
+
+high QPS low latency file storage for video audio and app data all providing
+
+way above 99.9% availability and durability
+
+for databases we have a variety of offerings for sequel databases no sequel
+
+document stores and in-memory caption layers in addition to our ability to
+
+deploy our own solutions which we can actually mix and match once our
+
+distributed system is already deployed on a cloud we can take advantage of many
+
+other general-purpose offerings like unified logging
+
+monitoring alerting big data analytics and distributed queues
+
+and finally we have the more specialized services like function as a service
+
+which allows clients to deploy a small piece of code and save even more on
+
+costs and maintenance machine learning api's and specialized hardware IOT
+
+services for hardware oriented companies blockchain security and many many
+
+additional services and features once we deploy our distributed system in
+
+multiple data centers across the globe the cloud vendors also provide us with
+
+domain name services and traffic management which allows us to register
+
+our external service domain name and also route traffic to different regions
+
+based on latency geo proximity or other criteria
+
+so in the end all our users no matter where they are will see a unified view
+
+of our system they will all have the same user experience and simply enjoy
+
+using our product while remaining completely unaware of our systems
+
+complexity and global distribution in this lecture we get a thorough
+
+introduction to cloud computing will learn how clouds infrastructure and
+
+platform as a service offerings can save us time and even money and remove the
+
+entry barrier for young startups we also got an overview of the cloud
+
+architecture and fundamental building blocks that are fairly Universal across
+
+all cloud vendors now with our deep knowledge in distributed systems and
+
+with the services provided by the cloud vendors we can easily design build and
+
+deploy our distributed system for any purpose and scale see you guys all in
+
+the next lecture

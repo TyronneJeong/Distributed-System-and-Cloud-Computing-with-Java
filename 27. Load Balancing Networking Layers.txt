@@ -1,0 +1,114 @@
+welcome back to another lecture on load balancing in this lecture we will learn
+
+about another important aspect of load balancing we'll talk about the different
+
+networking layers on which the load balancers can operate to direct incoming
+
+traffic to our distributed system since all the traffic to our system flows
+
+through the load balancers there are typically two networking layers on which
+
+the load balancer can inspect the traffic and route it to the application
+
+servers the first layer of load balancing is the transport layer which
+
+is also referred to in the industry as layer for load balancing the layer
+
+number corresponds to the transport layer in the OSI networking model the
+
+second layer of load balancing is the application layer which is also referred
+
+to as layer 7 load balancing the OSI model is very similar to the
+
+tcp/ip model we learned in a past lecture and networking but it breaks
+
+down the networking stack in a higher granularity
+
+when a load balancer is configured to operate on the transport layer it simply
+
+forwards the TCP packets from the client to the back-end server according to one
+
+of the load balancing strategies we discussed earlier this is the most low
+
+overhead load balancing mode since the load balancer does not inspect the
+
+content of the TCP packets beyond the first few to make the load balancing
+
+decision in this mode the only part of the TCP
+
+stream that the load balancer is concerned with is the source and
+
+destination IP address and port present in the TCP header for every request from
+
+the user to the load balancer the load balancer needs to replace the source
+
+address with its own address and replace the destination address with the back
+
+end servers address the load balancer decided to send a request for every TCP
+
+packet that the server sends back the load balancer needs to replace the
+
+source address with its own again and replace the destination IP and port back
+
+to the user's IP in port this way the user never knows any details about the
+
+actual server's address that handled its requests and we keep our distributed
+
+system secure and completely transparent to the outside world
+
+when the load balancer is configured to operate on the application layer it can
+
+make my smarter routing decisions based on the HTTP message header and that's
+
+because in this mode the load balancer is not only inspecting the TCP packets
+
+but also the HTTP headers content in the application layer mode the load balancer
+
+can route the request to a different set of servers based on the request URL the
+
+type of the requested data HTTP method or even browser cookies
+
+for example if we run a video streaming web-based service the general request to
+
+load the website's text and images can be routed by the load balancer to the
+
+general web server cluster when routing the request to this back-end cluster we
+
+may choose a strategy like round-robin for balancing the load among the
+
+individual servers later when a user wants to search for a particular movie
+
+the load balancer would route the request to our search compute cluster
+
+where we can maintain a different load balancing strategy such as the leased
+
+connections for example and finally when the user sends a request to start
+
+streaming the actual movie the load balancer may route the request or
+
+dedicated video cluster for this cluster we may use a combination of the users
+
+cookie and the source IP hash strategy to maintain a continuous connection
+
+between the user and a particular server throughout the entire streaming session
+
+in this lecture we'll learn about the two networking layer modes that the load
+
+balancers can operate in the transport layer load balancing is the best choice
+
+if we only want to do simple world balancing without any additional routing
+
+logic or if we want to keep the load balancing overhead to the absolute
+
+minimum the application layer load balancing allows us to make smarter and
+
+more advanced decisions at the load balancer based on the HTTP headers
+
+content for most distributed systems the overhead of the application layer load
+
+balancing is not very significant so the application layer mode is typically the
+
+preferred mode of operation since it allows us a lot more routing control
+
+over the incoming traffic to our system see you guys soon in the next lecture
+

@@ -1,0 +1,319 @@
+hey guys we'll come back in this lecture we're going to learn how
+
+to install configure and run a Kafka cluster on our computer we'll start with
+
+a cluster with a single Kafka broker and then expanded to multiple brokers then
+
+we will test our cluster using a command line version of the Kafka producer and
+
+Kafka consumer and finally we're going to put our clusters full tolerance to
+
+the test so before we start sitting on the
+
+cluster let's have a quick reminder of what a Kafka cluster looks like a
+
+complete Kafka cluster consists of one or more Kafka servers all those servers
+
+need to connect to a zookeeper cluster which manages the Kafka membership
+
+leadership / partitions in the text failures in order for the publishers and
+
+the consumers to connect our Kafka cluster they only need a small subset of
+
+Kafka server addresses which are referred to as bootstrap servers the
+
+subsets can even consists of a single server but multiple servers is a better
+
+practice once the connection with those bootstrap servers is established the
+
+producers and the consumers can send and receive messages to and from the entire
+
+Kafka cluster for our learning purposes we're going to start with a single
+
+zookeeper instance for simplicity then we will create a Kafka cluster
+
+consisting of a single server which is also going to be our bootstrap server
+
+for the rest of the cluster then we will test our Kafka cluster with a feature
+
+limited command line producer and command line consumer so let's go ahead
+
+and download the latest release of Kafka from its official web site
+
+after we unpack and open the Kafka directory we'll find all the scripts we
+
+need to run and test Kafka in the bin directory
+
+pull the configuration files for Kafka and its dependencies are in the config
+
+directory and all Kafka's dependencies are located in the lips directory
+
+since Kafka need zookeeper to run inside the config directory we'll find a ready
+
+for us to use zookeeper that properties file which is exactly the same as the
+
+config file we use for zookeeper in the past lectures in the course we can use
+
+the same config file we used in the past to start zookeeper but since this config
+
+file is already here we're going to use it for this lecture notice the data
+
+directory needs to point to a location that zookeeper has access to
+
+so specifically Windows users will need to change it to another folder of your
+
+own other than that this config file is ready for us to use with Kafka which
+
+would connect to it using port 21 81 so let's open a terminal and start su
+
+keeper by running the zookeeper server start pointing it to the config file
+
+we're just inspecting now with zookeeper running let's go back to the config
+
+directory where we will find the server dot properties which is the
+
+configuration file for a single Kafka server in this config will find many
+
+default properties for a Kafka broker the most important ones are the broker
+
+ID which has to be unique for every Kafka broker next we have the default
+
+port on which the Kafka server is listening which is port 1992 then we
+
+have the log directory which is the location where Kafka persists all its
+
+data and of course has to be a valid location in our file system where Kafka
+
+has access to so again if we are using Windows we would have to change this
+
+path to a new directory of our choice the last important property is the log
+
+retention hours which tells Kafka how long it should retain the messages it
+
+received from the publishers this number would definitely need to change based on
+
+the size of our messages the volume of the data we expect to receive every hour
+
+and the capacity of our disk so let's go back to the terminal and launch a single
+
+Kafka broker using the Kafka server start script pointing into the sir
+
+properties config file after we run the broker it connects and registers with
+
+zookeeper so now we have a fully functional single broker Kafka cluster
+
+before we can publish any messages to Kafka we need to create a topic so let's
+
+open a separate terminal window and use the Kafka topic script with the create
+
+argument we will point the script to our cluster by setting the bootstrap server
+
+to the address of our single Kafka server then we will send a replication
+
+factor of our topic to one meaning it will not be replicated to any other
+
+server since we don't have any other server yet we will also set the number
+
+of partitions to 1 which means all the messages to the topic will be in one
+
+order at Combe and finally we will use the topic parameter to name the topic
+
+chat a chat is a good example of a topic we would want to have only one partition
+
+for since the order of all the messages should be preserved now we can also use
+
+the same script with the list argument to observe that the topic we just
+
+created now exists within Kafka now let's publish some messages to our chat
+
+topic using the Kafka console producer script which is a very basic and feature
+
+limited script we can use to test our cluster we will point it to a subset of
+
+our Kafka servers which is our only server at this point and tell it to
+
+publish messages to our chat topic so let's publish two messages while we
+
+still don't have any consumers now let's start a consumer by using the Kafka
+
+console consumer script pointing it to our cluster telling you to consume
+
+messages from the chat topic and also passing the from beginning argument to
+
+tell it to read all the messages that were ever published to the topic and as
+
+we can see the consumer read all the messages from the topic and is now
+
+subscribed to the topic waiting for new messages to arrive so if we publish a
+
+third message the consumer will receive it almost immediately
+
+now notice and if we close the consumer and restart it it will read all the
+
+messages from the topic in the same order they were published by the
+
+publisher and that is because our topic has only one single partition
+
+so now that we have successfully configured ran and tested a basic
+
+cluster with a single broker in a topic with a single partition let's expand our
+
+cluster to a more realistic multi broker setup
+
+all we need to do to achieve this is to configure and launch a few more Kafka
+
+servers which will be completely transparent to the publisher and the
+
+consumer to launch another Kafka Broker all we need to do is duplicate the
+
+server properties file and make a few small changes the first change is to
+
+increment the broker ID for the new Kafka broker the second change is to
+
+give it another port number to listen on which will be port 1993 and that's
+
+because we're running the entire cluster on our single machine in production we
+
+would not need to do it since different brokers would run on separate computers
+
+the last change we need to make is to point it to a different location where
+
+the broker can persist all its data this change is also due to the fact that we
+
+are running the entire cluster on our single computer now let's save the
+
+config file and name its server - 1 and then do the same thing for our third
+
+Kafka broker which will have the ID equal to 2 listen on port 1994 and store
+
+its data in a separate location we'll also name this config file server - 2
+
+dot properties now let's go back to our first terminal window and launch a
+
+second Kafka broker 22 server - 1 properties and launch a third server by
+
+pointing it to server - to that properties now let's go back to our
+
+second terminal window and create a new topic with replication factor of 3 3
+
+partitions and call it purchases notice that although we have 3 Kafka servers we
+
+need to specify only a subset of them as bootstrap servers and those bootstrap
+
+servers will propagate the topic creation through zookeeper to the rest
+
+of the cluster now let's verify that the topic was successfully created by
+
+calling the Kafka topic script with the list parameter and as we can see we have
+
+the new topic within Kafka as we expect now let's also use the same script with
+
+the describe parameter and ask it to describe the topic we just created and
+
+now we see a more detailed picture of how our new topic is managed by Kafka in
+
+the first line we see the the topic has three partitions as we
+
+expect and it also has a replication factor of three as we configured when we
+
+created a topic the next reliance described each partition of our topic so
+
+we can see that partition 0 is replicated by broker ID 0 1 & 2 its
+
+partition leader is broker 0 and are in sync replicas include all our Kafka
+
+broker IDs which means all the replicas are up to date with the partition leader
+
+and are healthy as far as zookeeper is concerned the same information we have
+
+about partition 1 whose leader is Kafka broker number two and the last partition
+
+partition number 2 whose leader is broker number 1 for comparison if we run
+
+the same script for our first chat topic we see that it has only one partition
+
+with a replication factor of 1 and is managed by only one broker whose ID is 0
+
+and is not replicated anywhere besides the leader itself
+
+now let's launch our console producer and publish a few purchase messages to
+
+tester and in the distributed topic after we published some messages let's
+
+launch our consumer script and ask it to read all the messages from that topic
+
+from the beginning of time and as we can see this time the messages we read are
+
+clearly not in the order they were published and that is because the
+
+publisher likely used different keys for all the messages which in turn resulted
+
+in the messages being sent to different topic partitions as we remember each
+
+partition is an ordered queue however there is no global order between the
+
+partitions which is why we see the messages out of order
+
+so now that we have a fully distributed topic running in a cluster of three
+
+Kafka brokers let's test some of Kafka's fault tolerance features we discussed
+
+earlier in the previous lecture let's go back to our first terminal window and
+
+shut down one of our Kafka brokers after broker number one is done let's go back
+
+to our second terminal window where we already see that our publisher was the
+
+connection to that broker but despite the loss in the connection our cluster
+
+should remain fully functional so let's verify that by running the Kafka topic
+
+script and I said to describe the purchases topic for us again as we can
+
+see partition 2 whose leader used to be broker 1 which is not available anymore
+
+is now managed by broker number 2 we also see that for each of the partitions
+
+the only in sync replicas are brokers 0 and broker 2 since at this point broker
+
+number 1 cannot be reached by zookeeper so now all the partitions are covered by
+
+the two remaining Kafka servers to test that this failure is indeed transparent
+
+to both our producers and consumers let's publish a few more messages to the
+
+topic and as we can see the messages are successfully published and are consumed
+
+by our Kafka consumer now if we close both the producer and the consumer and
+
+restart the consumer asking it to read all the messages from the purchases
+
+topic we see that despite one of our brokers being done all the messages are
+
+still within the topic and that is thanks to the replication factor we set
+
+for the topic which resulted in each partition to be replicated to more
+
+brokers so no data has been lost in this lecture we'll learn how to run a single
+
+and multi broker Kafka cluster using the Kafka provided scripts we successfully
+
+created a topic with a single partition and observed that the order of the
+
+messages in that topic is equivalent to the order in which the messages were
+
+published we also created a topic that spends multiple partitions and observe
+
+that in this case the order of the messages depends on which partition
+
+those messages were published to finally we tested Kafka's failover in a
+
+replication and observed how if a single broker is completely
+
+transparent to both the producers and the consumers the leadership over the
+
+partitions was automatically spread over the remaining Kafka brokers and no data
+
+has been lost thanks to the Topix replication factor
+
+see you all in the next lecture

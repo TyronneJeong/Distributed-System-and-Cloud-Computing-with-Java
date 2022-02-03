@@ -1,0 +1,266 @@
+welcome back after we get familiar with the Kafka producer Java API we're now
+
+going to learn the other side of Kafka the consumer API so in this lecture
+
+we're going to build a Kafka consumer using Java we're going to see how
+
+partition load-balancing works with consumers from the same consumer group
+
+and also experiment with the publish/subscribe pattern configuration
+
+finally we will test what happens when a consumer crashes and fails to notify
+
+Kafka that a message was consumed so let's go to our IDE and start a new
+
+maven project we will add the same dependencies to our
+
+pond an XML file just like we did for the Kafka producer now let's start with
+
+implementing the create Kafka consumer method which takes the bootstrap servers
+
+as an argument as well as the consumer group the current consumer will belong
+
+to this method is going to create a Kafka consumer for records that have
+
+keys of type long and values of type string to match the producer we created
+
+in the previous lecture now let's create the properties object which will hold
+
+all the configurations we want to pass store Kafka consumer the first property
+
+we're going to set is the bootstrap servers and pass it the bootstrap
+
+servers of our Kafka cluster now the producers serialize the keys from long
+
+to a binary format so we're going to use the long D serializer to deserialize the
+
+keys back to the one type and similarly we're going to tell the consumer to use
+
+the string D serializer to deserialize the values from the Kafka
+
+records we are also going to set the group ID property with the consumer
+
+group to which the current consumer belongs to now every time a consumer
+
+from a particular group reads a message from a topic Kafka needs to be notified
+
+that the message was already consumed to make sure the consumer will not be sent
+
+the same message twice generally it is a better practice to manually tell Kafka
+
+that a message has been successfully consumed rather than doing it
+
+automatically and that's because a consumer may read the message but before
+
+it does anything with it the consumer may crush in that case we would like
+
+that message to be reread again so we're going to set the outer enable commit
+
+property to false there are many other configurations we can set in tweak
+
+however this is enough for us to get a fully functional Kafka consumer the
+
+second method we're going to implement is the consume messages which takes the
+
+Kafka topic we want to read messages from as an argument as well as the Kafka
+
+consumer the first thing we're going to do is subscribe to our topic since we
+
+can subscribe to as many topics as we want the subscribe method takes a list
+
+of topics so we're going to create a list containing our single topic then
+
+we're going to run in an infinite loop and call the poll method which blocks
+
+for a given period of time waiting to consumer records from the topic if the
+
+duration we pass into the pole method expires the method will return with no
+
+records otherwise the method will return as soon as it gets any record there
+
+reason this method returns consumer records instead of a single record is
+
+that Kafka would often try to optimize and batch multiple records for network
+
+efficiency if we did not receive any records we may choose to perform other
+
+tasks in our application or increment a counter if we want to limit the time we
+
+do not see any messages in our case we're not going to do anything special
+
+if we do get some records we're going to iterate over them and for each record
+
+we're going to print out the records key the records value the partition from
+
+which the record came from and the offset that record occupied within that
+
+partition
+
+typically at this point we would perform some work to process the records which
+
+is consumed and only after the processing of the messages is complete
+
+because they commit a sync method which tells Kafka that our consumers
+
+successful to consume those messages so now that we have those two methods
+
+implemented let's define the topic we're going to use to test our consumer and
+
+the list of bootstrap servers were going to use to connect our Kafka cluster in
+
+the main method we're going to first define our consumer group variable if
+
+the consumer group was passed our application and command line we would
+
+use that value otherwise we're going to use the default name and to make it easy
+
+to follow which consumer group this consumer belongs to we're going to print
+
+that out after we decided on our consumer group we create the Kafka
+
+consumer by calling the create Kafka consumer method with the list of
+
+bootstrap servers and the consumer group and finally we call the consume messages
+
+method which will subscribe and start reading messages from our topic and
+
+that's it now all we need to do is run the maven clean package command to build
+
+and package our consumer application now that we have our consumer
+
+application ready we're going to test it using the same disturbia topic we
+
+created in the previous lecture and see how Kafka performs partition load
+
+balancing based on the number of consumer instances within a consumer
+
+group so let's open a new terminal and test
+
+our consumer with a Kafka console producer which is easier to test with
+
+point it to one of our Kafka servers until to produce messages to the events
+
+topic now let's produce two messages and in the second window launch a single
+
+instance of our Java consumer since we did not pass any argument it will use
+
+the default consumer group and since this consumer group has never been
+
+registered with Kafka before by default it will ignore all the pass messages
+
+that behavior can be easily changed if necessary
+
+now let's publish another message and as we can see it was immediately consumed
+
+by our consumer notice that the command line producer does not set any key for
+
+our records which tells us that we expect their records to go to different
+
+partitions in the run robe in order now if we stop the consumer and publish
+
+another message while the consumer is down then resume the consumer the
+
+consumer will read message number four from the topic since the consumer group
+
+is now registered with Kafka and there are new messages in the topic that are
+
+consumer hasn't consumed yet now if we produce a few more messages we see that
+
+all of them go to different partitions as we expect in a read one by one by our
+
+consumer instance and that's because in our consumer group we currently have
+
+only one consumer now if we launch a second consumer which joins the same
+
+consumer group and publish a few more messages we see that some messages go to
+
+our first consumer and some to the second in fact if we look closer we see
+
+that the first consumer consumes messages only from partition zero and
+
+one and the second consumer consumes messages only from partition two now if
+
+we add a third consumer into the same group and publish a few more messages we
+
+see that now Kafka rebalances the load and our
+
+consumers assigning one partition for each consumer instance and if one of our
+
+consumers goes down for any reason Kafka detects debt and will now
+
+rebalance the partitions again assigning partition two to our second consumer and
+
+partition zero and one to our third consumer
+
+now that we ran multiple kafka consumers within a single consumer group and
+
+tested Kafka's dynamic load-balancing let's use our consumers in a
+
+publish/subscribe pattern to run our consumers independently all
+
+we need to do is run each instance within a separate consumer group now if
+
+we publish a message to the topic that message will be consumed by all the
+
+consumers this effectively runs our consumers in a publish/subscribe pattern
+
+where any message published to the topic is broadcasted to all the subscribers
+
+the last scenario we're going to cover is what happens if a consumer fails to
+
+commit in other words when a consumer fails after the records are read from
+
+Kafka or during the processing of the messages
+
+to simulate that failure to commit to Kafka let's go back to our code and
+
+comment out the commit a sync method call
+
+then we'll rebuild our consumer application to see what happens
+
+in our terminal let's produce a new message message number 22 well our
+
+consumers are still down after that let's resume one of our consumers in the
+
+consumer group number one since message 22 has not been consumed by this
+
+consumer yet it will read that message from the topic however since our
+
+consumer fails to commit to Kafka Kafka assumes that this message has never been
+
+successfully processed by the consumer from this consumer group to illustrate
+
+that let's stop our consumer and then rerun it again and as we can see the
+
+consumer reads the same message message number 22
+
+so Kafka will continue redeliver in the same message to the consumer
+
+until the consumer commits to Kafka confirming that the message was indeed
+
+successfully processed in this lecture we completed our Kafka
+
+skill set and are now able to build Bopha Kafka producer and a Kafka
+
+consumer using Java using those API is we can successfully connect our
+
+distributed system components through Kafka and keep them all loosely coupled
+
+specifically in this lecture learn how Kafka automatically and dynamically
+
+balances the load and our Kafka consumers within the same group based on
+
+the number of consumer instances within that group we also experimented with the
+
+publish/subscribe pattern where each consumer belong to a different consumer
+
+group in this configuration each message sent to the Kafka topic was broadcasted
+
+to all the topic subscribers and finally we learn that using manual commit to
+
+Kafka we can safeguard our consumer applications from losing messages if the
+
+consumer failed during the processing of those messages see you guys soon in the
+
+next lecture
+

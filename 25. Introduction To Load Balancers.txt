@@ -1,0 +1,200 @@
+welcome back to another lecture in this lecture we'll start talking about the
+
+concept of load balancing we'll learn why we need load balancers in our
+
+distributed system and what capabilities and benefits they can provide finally we
+
+will talk about the different types of load balancers that are available to us
+
+so let's start with understanding why we need a load balancer the perceptive
+
+students probably already noticed a few small but significant problems in our
+
+parallel search distributed system the first one is that our user-facing server
+
+is in fact a single point of failure if the server goes down for a few seconds
+
+for any reason the users would lose access to our distributed system
+
+altogether and even if the server stays functional once our system scales to a
+
+large number of users this single server will not be able to handle an
+
+ever-increasing load but the user facing server is not the only part of our
+
+system that has a scalability problem as the number of users grows the search
+
+coordinator starts getting more and more requests it needs to handle and as the
+
+number of documents grows and we add more worker nodes into the search
+
+cluster the search coordinator needs to send more outbound requests which
+
+requires opening a lot more connections and potentially exceeding the operating
+
+system's limits the search coordinator will also have to receive a lot more
+
+data back from the workers which would put a lot of pressure on the search
+
+coordinator during the aggregation step so although the search coordinator is
+
+not entirely a single point of failure as any worker can automatically take its
+
+place it is definitely a bottleneck in our system and can cause the entire
+
+system to slow down or stop altogether one thing we can do to help with this
+
+problem is to add more search coordinators for example we can modify
+
+the leader election algorithm to elect not one but multiple coordinators or we
+
+can separate the coordinators and the worker nodes entirely and have a pool of
+
+identical search coordinators that can potentially split the workload then all
+
+those search coordinators can register themselves into the coordinator service
+
+registry and once the user-facing server pulls all the coordinators addresses it
+
+can evenly split the load among the coordinators which would reduce the
+
+performance pressure on each coordinator instance the solution definitely helps
+
+but it has two drawbacks first of all it couples every two systems with a service
+
+registry which is an internal component to our system if we are providing
+
+service externally through a public API this type of coupling just would not
+
+work we want to hide all the implementation details by providing a
+
+single address which would create an illusion of talking to a single machine
+
+and even if the service is internal to our company it is still a better
+
+practice to decouple the individual services to allow them to scale and
+
+evolve independently the second drawback of this design is that it forces the
+
+client to implement the load balancing logic in each application that needs to
+
+talk to another cluster internally it would cause us a lot of code duplication
+
+which is not part of the core functionality of the client application
+
+but with external clients like our end users this approach will simply not work
+
+we definitely cannot expect our end users to maintain a list of addresses of
+
+our servers and load balance between them while the users are not even aware
+
+of each other so the new component we're going to
+
+introduce into our system is the load balancer
+
+a load balancer is a device that distributes network traffic across a
+
+cluster of application servers by spreading the load among the servers the
+
+load balancer prevents any application server from becoming a performance
+
+bottleneck also by actively monitoring the health of the application servers a
+
+load balancer can direct traffic only to servers that are currently online this
+
+makes our system more reliable and highly available
+
+for example instead of the users sending requests to our user-facing server
+
+directly we can place a load balancer in between which directs the traffic
+
+between the user and the back-end server then we can increase the number of
+
+servers completely transparently to the user and the load balancer will fairly
+
+spread the load among those servers we can repeat the same pattern anywhere in
+
+our distributed system where we need only one server to respond to a request
+
+using periodic health checks to our servers the load balancer can spot a
+
+faulty server and stop directing traffic to it by taking it out of its rotation
+
+and when the server reports that it's healthy again it can be brought back to
+
+the rotation and start getting new traffic
+
+in a cloud environment where machines can be added on demand a load balancer
+
+can also add auto scaling capabilities for example a load balancer can detected
+
+the load on our servers reached a high threshold at which our servers may not
+
+be able to keep up for much longer once that threshold is reached the load
+
+balancer can automatically add more servers into our cluster to meet the
+
+increasing demand from our clients later when the load goes down below a certain
+
+threshold the load balancer can shut down some servers to save on running
+
+costs now that we get an idea of why we would
+
+want a load balancer in our distributed system let's talk about the types of
+
+load balancers that we have available to us generally there are two types of load
+
+balancers the first type is the hardware load balancers which are dedicated
+
+hardware devices designed and optimized specifically for load balancing hardware
+
+load balancers usually provide higher performance and can balance the load to
+
+a larger number of servers also by being dedicated devices they're generally less
+
+prone to failures and are more reliable the second type is the software load
+
+balancers which are load balancing programs running on general-purpose
+
+computers that perform the load balancing logic software load balancers
+
+are typically easier to configure update upgrade or troubleshoot since they are
+
+just a program we install and run on a general-purpose computer also running
+
+software load balancers is generally cheaper and more cost effective since we
+
+are using commodity Hardware and there are in fact quite a few free and
+
+open-source solutions available to us such as H a proxy or nginx to name a few
+
+within a single organization we can actually use a mix of hardware and
+
+software load balancers for different purposes for example at the gate or
+
+system we may place a few Hardware load balancers for higher reliability and
+
+performance and then internally we may play software load balancers in front of
+
+each logical cluster of nodes before we go into deeper aspects of
+
+load-balancing let's quickly summarize what we learn in this lecture in this
+
+lecture we get the motivation behind having load balancers in our distributed
+
+system by putting our cluster of servers behind a load balancer we prevent any of
+
+our application servers from becoming a performance bottleneck or a single point
+
+of failure by using a load balancer we can easily scale our cluster up and down
+
+without exposing any implementation details to our clients thanks to the
+
+load balancers health monitoring features we can keep our system reliable
+
+and highly available and finally we talked about the hardware and software
+
+load balancers which give us a range of flexibility when choosing the right
+
+solution for our system see you guys soon in the next lecture
+

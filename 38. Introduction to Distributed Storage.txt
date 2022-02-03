@@ -1,0 +1,147 @@
+hey guys welcome back it's now time for us to talk about distributed storage so
+
+in this lecture we're going to talk about why we need distributed storage
+
+what options we have for storage in general and start the discussion about
+
+distributed databases so let's talk about storage in distributed systems
+
+in a typical system we normally have users interacting with our servers
+
+through a well defined external API or a user interface internally to our system
+
+we have multiple services that perform real-time and background work on the
+
+users data finally each system has some storage layer where we store both the
+
+temporary and long-term business data we already know how to scale our
+
+user-facing servers using techniques like load balancing and replication we
+
+also learned a lot of techniques to scale our internal systems such as using
+
+coordination systems service registries load balancers message brokers and
+
+others so to make our system completely distributed scalable and fault tolerant
+
+we need to add the same properties to our storage layer
+
+typically for storage we have two options we can store our data directly
+
+to the filesystem or store it in a database the filesystem is a lower level
+
+and general-purpose approach to store data of any format structure or size we
+
+can basically store anything in the filesystem whether it's a structured or
+
+unstructured data and is a perfect choice for data like video audio text
+
+files or memory loss however if we need more advanced operations on that data we
+
+should consider using a database the database is a higher level abstraction
+
+that may or may not store that data to the filesystem underneath a database is
+
+nothing more than an application that provides us with additional capabilities
+
+such as a query language in a query engine as well as caching and
+
+performance optimizations based on the node structure of the data it also
+
+provides restrictions about the data structure relationship and format and
+
+overall system guarantees like asset transactions that allow is to ensure
+
+that our transactions will be atomic consistent isolated and durable in this
+
+section we're mainly going to focus on databases since there are a lot more
+
+common and are easier to build and replace than specialized distributed
+
+file systems generally there are two types of databases the first type is the
+
+relational databases where the data is structured in a form of tables
+
+consisting of rows and columns the second is the non-relational databases
+
+where data is less structured and can be as simple as key value pairs document
+
+stores or even graph in a relational database each record in a table is a
+
+separate row each record is uniquely identified by a primary key it has the
+
+same attributes as the rest of the records in a table which are represented
+
+by different columns this structure the organization based on a predefined
+
+schema allows us to run sequel queries on a single or multiple tables to
+
+analyze our data in a non sequel database the structure of each record
+
+can be different from others which limits our ability to analyze the data
+
+across multiple records but also keeps the records a lot more independent of
+
+each other and as we will see in the next lectures will be a lot easier to
+
+scale than relational databases so before we talk about building and
+
+distributed database let's formalize why we want to go to the distributed route
+
+the three characteristics we want from our database are availability
+
+scalability and fault-tolerance just like any distributed system of course
+
+achieving it with a centralized system is impossible and let's see why
+
+the obvious problem of having a centralized database is that it is a
+
+single point of failure losing a database instance is a lot worse than
+
+losing a compute instance in addition to the temporary failure to operate our
+
+business while the database instance is unavailable we risk losing all the data
+
+permanently altogether a compute node can easily be restarted on the same or a
+
+different machine but imagine what would happen if an online store loses all its
+
+data about its inventory a video streaming service loses all its movies
+
+or a social network loses all the data on all its users in addition a
+
+centralized database can be a performance bottleneck the parallelism
+
+of the database is limited to the number of course in that machine the number of
+
+connections is limited to the number the OS and the network card can support and
+
+if we have only one source for our data that your graphical location of the user
+
+determines the minimum on the latency we can expect to achieve finally if we want
+
+to store all or part of the data in memory to speed up the operations we are
+
+also limited to the memory capacity of that particular computer
+
+so to achieve a fully distributed system we're going to attempt to distribute our
+
+data across multiple physical nodes to guarantee full system availability
+
+scalability and fault-tolerance in this lecture we get the motivation
+
+behind building and distributed storage system and specifically a distributed
+
+database we talked about the different types of storage and types of databases
+
+as well as the considerations for picking one over the other
+
+later we focused on the importance of having a reliable database as losing a
+
+database instance with all its data poses a great risk to our business so in
+
+the next lectures we're going to start the journey into distributed databases
+
+and all the interesting challenges and solutions that come with the task
+
+see you guys soon

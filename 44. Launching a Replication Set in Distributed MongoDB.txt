@@ -1,0 +1,263 @@
+welcome back to another lecture now we're going to launch a fully
+
+replicated MongoDB cluster using replication sets we will also get
+
+familiar with MongoDB Java API and build a client application to test our cluster
+
+finally we will put our replication set to the test by injecting a failure into
+
+one of our nodes so let's jump to our terminal and launch
+
+a MongoDB cluster first since we are going to launch three
+
+instances of manga D on the same machine we will need to create three separate
+
+directories where each of the manga the instances can store all its data of
+
+course in production we would want to launch each of those instances in a
+
+separate machine so let's call the first directory RS 0 there 0 where RS 0 is
+
+going to be the name for our application set which all our nodes will share the
+
+second directory will be called RS 0-1 and the third directory will be called
+
+RS 0-2 now that we have three directories let's launch the first one
+
+goody instance first we pass it their application set name which is RS 0 then
+
+we're going to tell it to listen on port 27 0 17 we bind it to localhost then
+
+using the DB path parameter we pass it the directory where it will store all
+
+its data and finally it will limit its operations log size to 128 the
+
+operations log is the log file where Mongo D stores all its records about
+
+data modification operations for recovery from failures now similarly
+
+we're going to launch a second one the denoted pointing into the same
+
+replication set name or telling it to listen on port 2708 een and finally we
+
+launch the third Mongo d node which will also be part of the same replication set
+
+r0 and listen on port 27 of 19 I want to point out that we passed all those
+
+parameters in command line just for visibility but we could just as easily
+
+put all those parameters into three separate and fake files and then point
+
+each node to its own configuration now to initialize the replication set we
+
+need to perform one step which we need to do only once for every replication
+
+set first we need to connect to any of the mangu the instances which is going
+
+to be part of their replication set then we're going to call the RS dot
+
+initialize method and pass it a JSON object which sets the ID of our
+
+application set as well as all the members which will be part of their
+
+replication set once we run that command our
+
+three Noah's joined together and run an election which elects one of the notes
+
+to be a primary and the rest of the notes become the secondaries now if we
+
+connect to the first node that we see that it was elected to be the primary
+
+the second node is a secondary and the third node is a secondary as well
+
+so as we just saw launching your replicated MongoDB cluster is actually
+
+very easy so now let's build a small java
+
+application to test our distributed MongoDB cluster
+
+to test our cluster we're going to build a small command line app to enroll new
+
+students into our online school our database will have a separate collection
+
+for each of our courses and before we allow my new student to join a course we
+
+will make sure that that student is not already enrolled and also that that
+
+student's GPA is sufficient to join the course the application of course can
+
+easily be extended to be a service that accepts data through Network calls and
+
+has a lot more complex logic but for the sake of practicing we will keep it very
+
+simple so after creating a new maven project
+
+will add the MongoDB driver dependency so we connect to MongoDB using the Java
+
+API in the application class will start with implementing the connect to MongoDB
+
+method which takes everyone go DB cluster URL and the name of our database
+
+the method first creates a Mongo client which connects to MongoDB and then we
+
+get the database object by calling the gab database method with the database
+
+name now at the top of the class let's define our MongoDB URL which has a
+
+specific format which contains a comma separated list of addresses where each
+
+address is one of our replication set nodes the successfully connect to our
+
+replication said we need at least two of the nodes which gives us room to add
+
+more nodes in the future if we have to also in the query part of our URL we
+
+pass the name of the clusters replication set in addition to the
+
+clusters URL will also define our database name which is online school now
+
+let's create the main method and parse the input from our application arguments
+
+where the first argument is going to be the course name the second argument is
+
+the student's name the third argument is the students age and the last argument
+
+is the students GPA so let's get our online schools database object by
+
+calling our connect to MongoDB method and pass it our cluster URL and the
+
+database name is arguments once we have our database we will pass it to the
+
+enroll method which in addition to the database object will take the course
+
+name the students name age and GPA as argument now let's go ahead and
+
+implement our in row method which will enroll the student to a given course if
+
+all the validations are passed successfully first since we are very
+
+selective we're going to define the minimum GPA at the top of the class as
+
+90 then we'll go back to our enroll method and check if the course name
+
+passed to us and the command line actually exists if it doesn't exist we
+
+will print out an error message and return from the method otherwise we're
+
+going to create a new collection object for our course by calling the get
+
+collection with the name then we will set the right concern
+
+to majority since we want to make sure any update to our course collection is
+
+fully replicated to a majority of our cluster that is to make sure we don't
+
+lose any enrollment data also will set the read preference to primary preferred
+
+since we are going to read from the course collection right after we add a
+
+new student and we want to guarantee straight consistency in our reads this
+
+is of course a choice we are making just for this particular example now after we
+
+have the reference to our collection we're going to check that the student is
+
+not already enrolled in the course if he is we are going to print out an error
+
+message and return from the method if the student is indeed a new student
+
+we're going to check if his grades are good enough by comparing to our minimum
+
+GPA and finally if the GPA is satisfactory we're going to insert a new
+
+document which corresponds to the new student and set its name age and GPA as
+
+was passed to us in the methods argument after we successfully inserted the
+
+student document in our collection we're going to print out a friendly message
+
+and then read from our course collection and print out its content to the screen
+
+as we can see throughout this entire method that we use the same commands
+
+like insert one and find that we used in the command line manga client the only
+
+thing left for us to complete the application is to implement the is valid
+
+course method to avoid inserting a student element into a non-existing
+
+collection which in turn would result in the automatic creation of that
+
+collection we need to iterate over the existing collections in the database
+
+first and check that the given course name isn't that list to get all the
+
+collections in the database we call the list collection names method then we
+
+iterate over all the existing collection names and if our course exists we return
+
+true otherwise we return false from the method and that's it so let's run the
+
+maven clean package command to build our application jar and once that process is
+
+finished let's go to the terminal and try to enroll Michael to the physics
+
+course and as we can see we get an error since we have not create
+
+the physics course in our database so let's connect to our primary node using
+
+Mongo switch to our online school and create the physics course by running the
+
+DP that create collection method with the name of our course
+
+now if we run our application again with the same parameters we can see that the
+
+student Michael was successfully added to the course as a document in the
+
+physics collection if we try to repeat the same command again we now get an
+
+error since Michael is already an existing student in our database
+
+collection now if we try to add Jack whose GPA is below our threshold we get
+
+an error telling Jack to improve his grades and finally once Jack improves
+
+his GPA to 98.9 we successfully add in him to our course collection and now we
+
+have two students in our course now before we conclude this practice
+
+example let's see how our replicated distributed database cluster responds to
+
+failures of individual nodes so let's go back to our terminal and kill no other
+
+but our primary replication node as we can see that two secondaries are
+
+constantly trying to reconnect to that lost node but in the meantime we can see
+
+that the second node was elected to be the primary and the third bottom node
+
+that remains the secondary for backup so if we run our application trying to
+
+enroll a new student to our course we see that the failure in our collection
+
+is completely transparent to the client and not only we did not lose any data
+
+but our cluster remains available for new writes and reads
+
+in this lecture we build a fully replicated MongoDB cluster with three
+
+nodes using your replication set we later built a client application it can
+
+read and write to our cluster through the MongoDB Java driver library in that
+
+application we saw how we can control the write concern and the rig
+
+preferences per database collection depending on our needs and finally we
+
+put our replication set configuration to the test by injecting a failure into one
+
+of our clusters nodes and observe that our data stayed intact and our cluster
+
+remained available for both writes and reads
+
+see you guys soon

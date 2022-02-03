@@ -1,0 +1,444 @@
+welcome back in this lecture we will finish our distributed search by
+
+implementing the user facing server which can take input from the user and
+
+initiate our parallel tf-idf algorithm once we're done with the implementation
+
+we will test our distributed system and to end under multiple scenarios before
+
+we talk about the specific components we're going to build let's get some
+
+motivation behind why we're building this part of the system in the end of
+
+the day every distributed system operates on data that data whether
+
+directly or indirectly comes from the user's desktop applications are not that
+
+popular these days so the most predominant way for users to interact
+
+with a distributed system is through a web-based UI that UI can be displayed in
+
+a desktop or mobile browser or it can be embedded in a native mobile app so in
+
+this lecture we're going to connect our users with our distributed search
+
+through a web application that takes input from the user using a web browser
+
+any time the user wants to perform a search they will open their web browser
+
+and type in our web applications address in the address bar the intern would send
+
+an HTTP request from the browser to our web server as a response our web app
+
+server will send back a page where the user can type in their search text set
+
+some basic filters and start the search once the user clicks on the search
+
+button we will send a JSON request from the browser containing the search
+
+request we choose JSON as this is the easiest way to serialize JavaScript
+
+objects from the browser and send them over the network that request will
+
+contain the user search query as well as the optional maximum number of results
+
+in the minimum score that the user would like to see on the page the request will
+
+then be converted to protocol buffers and sent to our search cluster and once
+
+the web app receives the results it would take additional actions such as
+
+filtering the number of results to shown the page or filter out the documents
+
+that are below a certain score then the server will send the response back to
+
+the browser also in a JSON format their response would contain the
+
+documents location and a list of search results where each result has the
+
+documents title in the score to show to the user each result will also have the
+
+file extension which combining with the documents location and the document name
+
+will help us link the document in the browser to its exact location on the
+
+server so let's go to our IntelliJ IDE and
+
+complete our distribute system we start with a new maven project for
+
+our web app but a lot of the components are very familiar to us we have the
+
+cluster management package where we have the service registry to connect to our
+
+search cluster in the model package we have the search model Java class which
+
+is the class we generated from the proto file in the last lecture for the
+
+communication between our user-facing web app in the search coordinator we
+
+only need the Java class here since the proto file represents our schema and we
+
+should only have one copy of it in one place under networking we have the
+
+familiar to us web client class to send HTTP requests to our search coordinator
+
+we also have the web server which we'll discuss in a few moments as always our
+
+application class has our server starting point where we connect to
+
+zookeeper and create the service registry object after that we create the
+
+user search handler which is only partially implemented at this point but
+
+once we complete its implementation it will be able to handle search requests
+
+from the user then we create the webserver pass the user search handler
+
+into it and start the server now let's focus on our user interface our UI
+
+consists of three files the HTML the CSS and the JavaScript the HTML file tells
+
+the browser what to show to the user the CSS file tells the browser how to show
+
+that content and the JavaScript tells the browser what to do when the user
+
+interacts with that content none of those are prerequisites to our course so
+
+it's completely fine if you've never worked with HTML CSS or JavaScript in
+
+the past the HTML page is the first page that will be loaded to the browser with
+
+the help of the CSS style file it will produce a page that will look like this
+
+the important parts are the links to our CSS and JavaScript files in the head
+
+section the three inputs for our user the search button and the empty area
+
+which will populate with the search results we'll skip the CSS file since
+
+all it does is setting alignment colouring and other visual properties of
+
+the HTML content in the JavaScript file we
+
+the surge button click event handler which when clicked will send this Ajax
+
+call containing all our inputs to the web server an ajax call is nothing more
+
+than an a synchronous HTTP request going from the browser to the web server even
+
+if you don't know anything about javascript the ajax call parameters
+
+should look very familiar to us we can see the HTTP request method parameter
+
+the content type and the relative path as well as the request message body
+
+which we create in the create request function we also see the data type we
+
+expect to get from the server as well as the function we want to call when a
+
+successful response from the server is received by the browser the create
+
+request function simply gathers all the inputs the user specified in the UI and
+
+creates a JSON like request JavaScript object we can see that this JavaScript
+
+object already looks very much like JSON and the browser's chasin that stringify
+
+function simply turns this object into a JSON format string when we get the
+
+response from the server the own HTTP response receives the JSON data from the
+
+response message body if the response was successful we call the add results
+
+function which simply shows an error message if the message is empty or
+
+iterates over all the results and shows them as a list of links pointing to our
+
+respective documents notice that by convention the Chasen fields are in in
+
+snake case and we'll have to use the exact same names in Java in order for
+
+our deserialization to work now let's go to our web server which will fetch those
+
+UI assets to the web browser in addition to everything we learned we have an
+
+additional HTTP handler for a route path this handler will send all the UI assets
+
+including our home page to the users browser if the relative path is the
+
+route path then we fetch the index.html page otherwise we'll load the
+
+corresponding asset from the applications resources directory now
+
+finally let's go to the interesting part which is the user search Handler and
+
+start the implementation of our logic first we have to define the java classes
+
+corresponding to the JSON objects we need to
+
+and receive from the UI so we'll name the incoming request class front-end
+
+search request the class will contain the search query the max number of
+
+results which if not set would default to the maximum long value and the mean
+
+score which is not set will default to 0 to get access to those fields let's also
+
+generate the getter methods now let's create the front-end search response
+
+class which represents the response sent from the server back to the UI we'll
+
+also create a nested class called search result in form which represents a single
+
+document the class will have the document title which we will show to the
+
+user the extension of the original file and finally we have the document score
+
+which will normalize to be in the 0 to 100 range in the top level of the
+
+response we'll have a list of those search results as well as the documents
+
+location which would tell the browser where our documents are located just
+
+like in the request class let's also generate the constructor and the getters
+
+which would give our serialization library access to all the fields one
+
+thing I want to point out is all the names here have to match letter by
+
+letter their version in the JavaScript file even a small type on in either the
+
+Java class or its counterpart in the JavaScript class can break the entire
+
+communication also Javas naming style is camel case in not snake case so we'll
+
+have to configure the deserialization library to make that conversion for us
+
+now to deserialize incoming JSON objects and serialized Java objects to JSON
+
+we'll need an external library one of the most popular ones is called Jackson
+
+so let's go to our maven pom that XML file and add jackson to our dependencies
+
+list to make use of this library we'll create the object mapper will configure
+
+the object mapper not to fail the D serialization if the browser sends us a
+
+JSON object with fields we didn't expect this is a good practice so we can
+
+iterate on the UI and the server code independently most importantly will
+
+configure the object mapper to convert snake case
+
+fields into camelcase java fields and vice-versa
+
+this way we can follow the snake ace jason field naming convention as well as
+
+keep the camel case java code style now in a similar way to our previous
+
+implementations we start the handle request method with deserializing the
+
+request payload to our plain old java object this time we're doing it using
+
+the jacksons libraries object mapper by calling the read value method which
+
+takes the byte array containing the json object and the java class to which
+
+jackson would deserialize the json then we build the front-end search response
+
+object by calling the create front and response and finally we serialize the
+
+Java object back to JSON by calling the right value as bytes of course if
+
+anything goes wrong we will catch the exception and return an empty byte array
+
+now implementing the search logic is going to be fairly technical we will
+
+simply need to send a request to our search cluster get the results filter
+
+them and send them back to the UI in a presentable way so let's define the
+
+create front-end response method which now doesn't care about JSON and operates
+
+only on plain java objects the first step is to call the center request to
+
+search cluster method which I implemented ahead of time and pass it
+
+the search query we got from the user once we have the response from the
+
+search cluster we create the list of filter results by calling the filter
+
+results method which would take the response from the search cluster the
+
+user supplied maximum number of results in the minimum score to filter our
+
+results on once we have the filter the results simply pass them into the front
+
+and search response object as well as the location of our books which we
+
+define in a top of the class and corresponds to our location of the
+
+original documents in our resources directory now the last thing we need to
+
+do is implement the filter results method which takes the search cluster
+
+response the maximum number of results and the minimum score we want to filter
+
+our results on the tf-idf formula assigned scores to our documents that
+
+really don't mean anything to the user and we will
+
+like to hide those implementation details as much as possible all the user
+
+cares about is the relative score between the documents to figure out the
+
+level of confidence in a particular document relevance so we will scale all
+
+our scores to be in the range of 0 to 100 to do that we first need to find a
+
+maximum score among all the documents by calling the get max score method then we
+
+allocate the ArrayList to store our filtered results after that
+
+we iterate over all the results or until we reach the maximum number of results
+
+the user asked for for each document we received from the search cluster we
+
+calculate the normalized score which would be between 0 and 100 by calling
+
+the normalized score method which takes the current document score and the
+
+maximum score we calculated earlier then if the calculated normalized score is
+
+less than what the user asked for we stop the iteration and cut our filtering
+
+right here otherwise we get the document named extract the documents title and
+
+the documents extension out of it and then we pass all the data into a newly
+
+created search result info object finally we add that search result in our
+
+list and when we're done filtering we return that list the color and that's it
+
+we're done implementing the user-facing server so now let's open the terminal
+
+and build and package our web application
+
+and once the building process is complete let's go ahead and start the
+
+app and as we can see the server successfully connect to zookeeper so it
+
+can access the search coordinator service registry and the web server is
+
+listening on requests on port 9000 so now that we have our entire
+
+distributed system ready including the user facing web application let's put
+
+our system to the test let's open our web browser and type
+
+localhost colon 9000 this loads our web page which contains the HTML CSS and
+
+JavaScript files we talked about early in the lecture now let's type our search
+
+query while we have and started any of our search cluster nodes yet and see
+
+what happens and as we can see the fact that our
+
+search cluster is still down did not create a cascading failure in our system
+
+instead our user is presented with a nice error message until we resolve the
+
+issue now let's go to the terminal and start for search nodes we built in the
+
+previous lectures the first one will listen on port 8080 the second on port
+
+8081 the third one on port 8080 - and the last one on port 8080 3 now let's
+
+click on the search button again and as we can see all our distributed system
+
+came together our web app server received the search requests
+
+communicated with the search cluster through the search coordinator the
+
+search cluster performed the distributed search and the sorted results made their
+
+way back to the user interface we also see that the user facing server
+
+normalized the scores for us so they look really nice and user friendly based
+
+on those scores we see that by far the most relevant search result is The
+
+Adventures of Sherlock Holmes book so we can easily click on it and start
+
+enjoying the content now let's try a less specific search query the word
+
+monster and as we can see now we have a wide range of confidence level scores
+
+which may overwhelm the user so the user can limit the number of results to 10 or
+
+they can limit the results by the minimum score of 20 for example also if
+
+you are using the Chrome browser we can right click anywhere on the page which
+
+would open the inspector in the inspector we can go to the network tab
+
+where we can observe all the network traffic between the browser and the web
+
+server so if we click on the search button again we can see that a new
+
+request was sent to the document search endpoint in the web server in the
+
+headers tab we can actually see all the information
+
+about the HTTP request we sent to the server and since the JSON request is
+
+human readable we can easily inspect every field in the preview tab we can
+
+see a nice preview of the JSON response we got from the server where we can see
+
+each individual search result this is very useful for debugging and
+
+troubleshooting the communication between the UI and our web server now
+
+let's go back to our search cluster and as we can see the node on the left top
+
+corner was elected to be the coordinator and when it received the search tasks it
+
+split the 20 documents into groups of seven seven and six documents that it
+
+split fairly among the worker nodes now let's simulate a failure by killing the
+
+coordinator and now we have a new coordinator which is the top right node
+
+so now we have one less no to perform the search so if we go back to our UI
+
+which is completely decoupled from any changes in the search cluster and
+
+perform a search we see that that change in the search cluster was completely
+
+transparent to the user and if we go back to the search cluster we see that
+
+now the coordinator saw that it has only two worker nodes so it correctly divided
+
+the work between those remaining nodes in this lecture we completed our first
+
+end-to-end distributed system for parallel document search along the way
+
+we practiced the use of json for serializing complex data between the
+
+browser and our web server we provided a nice UI for our users to interact with
+
+our distributed system while abstracting away all its complexity and we
+
+completely decoupled our user facing web application from the backend search
+
+cluster any failures or changes in the search cluster did not propagate into
+
+the UI and we did not expose any search implementation details to the user which
+
+means we can continue evolving our system by adopting new technologies or
+
+algorithms in the future I hope you're having fun and I will see
+
+you in the next lecture
+

@@ -1,0 +1,371 @@
+Hey welcome to another lecture in this lecture.
+
+We will implement the service registry in practice.
+
+And later we will integrate it with our leader, workers cluster architecture. So let's go ahead and
+
+implement the service registry using zookeeper as a quick reminder upon connection to zookeeper each
+
+node is going to create an ephemeral Znode under the service registry parent and store its address
+
+in its znode for others to see. Then any node that is interested in getting the address of another
+
+node simply needs to call getChildren() to get all the existing znodes under the service registry and then
+
+call the getData() method to read the address inside the znode. We can really store any configuration inside
+
+the znode
+
+but we must not forget that the znodes are not files on the file system but are stored in memory
+
+inside the zookeeper servers
+
+so we need to store the minimum data to allow communication within the cluster.
+
+In our case we're going to store the host port combination as the address which will be enough to establish
+
+that communication.
+
+We start with a similar setup as the previous lectures but this time I separated the leader election
+
+logic from the rest of the application into separate classes.
+
+Now the leader election class takes the zookeeper object into its constructor and contains the familiar
+
+to us volunteer for leadership method and their re-elect leader method.
+
+The class also implements Watcher like before but now it handles only the Node Deleted event which
+
+is the only relevant event for the leader election. The Application class has the familiar connectToZookeper(),
+
+run() and close() methods and it also implements Watcher but in the Application's process() method
+
+it only deals with the connection and disconnection events from zookeeper. In the main method
+
+we first create our application instance and obtain the zookeeper object by connecting to zookeeper.
+
+Then we perform all the the leader election logic and in the last part we call the run() method which suspends
+
+the main thread.
+
+There's nothing really new so far but this organization will allow us to grow our application while
+
+maintaining the separation of concerns among the different classes.
+
+So let's go to the cluster management package. In that package will create a new class called
+
+ServiceRegistry.
+
+This class will encapsulate all the service registry and discovery logic. At the top
+
+let's declare the registry znode name which is the parent znode for our service registry.
+
+The service registry class will also hold a reference to
+
+zookeeper, which we will pass into it through the constructor.
+
+Now the first thing we need to do is to create the service registry znode or at least make sure
+
+that the already exists.
+
+So let's define the createServiceRegistryZnode() method inside the method
+
+we check if the znode already exists by calling the exists() method and checking its return value.
+
+If the return value is null then at the time of checking that znode did not exist.
+
+So let's call the create() method but this time using the persistent create mode.
+
+This way does znode will stay there forever.
+
+So we don't have to recreate it every single time. Notice that there is a small race condition here between
+
+the exists() method and the create method.
+
+If two nodes call exists in the same time then they would both get null and proceed to create the same
+
+service registry znode.
+
+This race condition is solved by zookeeper for us by allowing only one call to the create() method on
+
+the same znode path to succeed.
+
+The second call would simply throw a KeeperException which we kind of swallow in this method by catching
+
+it and not doing anything special.
+
+Now let's call that method in the constructor so that every know that creates the service registry object
+
+will check that the service register znode exists and if it doesn't it would be created for us.
+
+Now let's implement the logic for joining the cluster.
+
+So last create the registerToCluster method which takes a meta data string as an argument.
+
+This metadata can be any configuration we want to share with the cluster.
+
+In our case it's going to simply be the address of the node.
+
+First let's create a member variable to store the znode
+
+we are going to create.
+
+Then we call the zookeeper
+
+create() method which takes the path to our znode under the registry znode parent.
+
+Then we pass the metadata's binary representation which we will store inside the znode and the znode
+
+is going to be ephemeral sequential to tie this znode's lifecycle to the lifecycle of this
+
+particular instance of the application by making it sequential.
+
+We simply avoid any name collisions but the actual sequence number is not important for us at this time.
+
+In the end we simply print out that we registered to the cluster and that's all we need to do to register
+
+our adderess with the service registry.
+
+Now let's implement the logic of getting updates from the service registry about nodes joining and leaving
+
+the cluster.
+
+So let's create the synchronized updateAddresses() method which will be called potentially by multiple
+
+threads.
+
+Also let's create the list of service addresses that will store a cache of all the nodes in the cluster
+
+to avoid calling getChildren every time we need the list of all the addresses inside the updateAddresses()
+
+will first call the zookeeper getChildren() method on the registry znode parent both to get the current
+
+list of children but also to register for any changes in that list to get those notifications we first
+
+need to implement the Watcher interface and define the process method which will handle those events.
+
+Then we create a temporary list to store all the cluster's addresses after that we iterate over all the
+
+children znodes, construct the full path for each znode.
+
+Then call the exists() method on that child znode to get its stats as a prerequisite for getting the
+
+znode's data.
+
+If between getting the list of children and calling the exists() method that child znode disappears.
+
+Then there are result from the method is going to be null.
+
+This is yet another race condition that we have no control over but we handle it by simply continuing
+
+to the next znode in the list.
+
+This is somewhat a mind shift we need to make between race conditions in multi threading which we can
+
+easily solve with a lock whereas in distributed systems some race conditions we simply need to learn
+
+how to anticipate and recover from.
+
+If the znode does exist then we called a getData() method on the znode's path.
+
+Then we convert those bytes into an address string and add that address into the list of addresses.
+
+When we're done getting old addresses from the service registry we will wrap that list with an unmodifiable
+
+list object and store it in the all service addresses member variable because the method is synchronized
+
+this entire update will happen atomically in the end we simply print out the addresses we have in our
+
+cluster at this point we don't only have all the addresses stored in a member variable but we are also
+
+registered for updates about any changes in the cluster.
+
+So let's handle those changes events inside the process() method.
+
+We're simply calling the updateAddresses() method.
+
+Again this will update our all service addresses variable and reregister us for future updates.
+
+The one thing we're missing right now is the initial call to updateAddresses()
+
+So let's create the register for updates method which will simply call to updateAddresses() method after
+
+a leader has registered for those updates.
+
+It may also want to get the list of the most up to date addresses.
+
+So let's create the synchronized get all service addresses method which will give us those cached results.
+
+If the allServiceAddresses is null then the caller simply forgot to register for updates so to make
+
+this call safe we will first call to updateAddresses method and in other case we will return the
+
+allServiceAddresses to the caller.
+
+The last feature we need to add is the ability to unregister from the cluster.
+
+This is very useful if the node is gracefully shut down itself or if the worker suddenly becomes a leader
+
+so it would want to unregister to avoid communicating with itself.
+
+So let's create the unregisterFromCluster() method which will first check that we indeed have an
+
+existent znode registered with the service registry and if we do we simply delete it by calling the delete()
+
+method and that's it.
+
+The service registry implementation is ready now that our service registry is ready.
+
+Let's integrate with our leader, workers architecture since our programming model is event driven.
+
+We need a way to trigger different events based on whether the current node was elected to be a leader
+
+or it became a worker in order to keep the service registry and discovery separate from the leader election
+
+logic.
+
+We will integrate the two using a callback.
+
+So let's create an interface called onElectionCallback.
+
+The interface will require the implementing class to implement two methods.
+
+The onElectedToBeLeader() and the onWorker methods.
+
+After every leader election.
+
+Only one of those methods will be called with this callback based approach.
+
+The modifications to the leader election class are going to be minimal.
+
+We simply store the reference to the own election callback which is passed into the leader election
+
+class through its constructor.
+
+Then in the re-elect leader method if we are elected to be a leader then before returning from the method
+
+we call the on elected to be leader callback method.
+
+And if we're not a leader but a worker then we call onWorker() callback method instead.
+
+And these are the only changes we need to make in the leader election.
+
+Now all we need to do is create a class that would implement those callbacks.
+
+So let's create the onElectionAction class which implements the onElectionCallback.
+
+We just created the class will hold a reference to our service registry and the port which will be part
+
+of our application's
+
+address those parameters are going to be passed into the class through its constructors arguments.
+
+If the onWorker() callback method is called then we create the current server address by combining the
+
+local hostname and the port as a single string and then we call the registerToCluster() method of the
+
+address as the metadata we store for others to see on the other hand if the current node was elected
+
+to be a leader.
+
+Then we first call unregisterFromCluster method.
+
+If the node just joined the cluster this method won't do anything but if it used to be a worker.
+
+But now it got promoted to be a leader.
+
+Then it would remove itself from the registry.
+
+After that we simply call registerForUpdates() and that's it.
+
+The last thing we need to do to glue everything together is go back to the application class define
+
+a default port for our application and then parse the port from the application's arguments.
+
+If the port was not passed into the application as an argument then we will simply use the default port.
+
+The reason for that logic is if we run the application instances on different computers then we can
+
+simply use the default port as the address of each node will be different.
+
+In this case because we running the nodes on the same machine we'll need to pass a different port for
+
+each instance.
+
+After we have the port we simply need to create the service registry.
+
+Then the onElectionAction object which takes the service registry and our application's port and finally
+
+the onElectionAction instance is passed into the leader election class as the implementation for
+
+that onElection callback and that's it.
+
+Our integration of the service registry to our master workers architecture is now complete.
+
+Now let's build and package the application and open 4 terminal windows.
+
+Let's launch the first node with the port 8080 since this is the first node to join the cluster.
+
+It became the leader and it registered for updates from the service registry which is still empty.
+
+Now on the right let's launch another node with the port 8081.
+
+And of course it joined as a worker so it registers itself with the service registry as soon as it did
+
+that the leader got the notification that the list of nodes in the cluster changed.
+
+And now it shows the newly added worker address in its list.
+
+Now let's launch another worker with the port 8082 which triggers another update on the leader side.
+
+And finally let's add the fourth node which is also a worker and now the leader has all the addresses of
+
+all the nodes in the cluster at this point it can freely send messages or tasks to all the workers until
+
+that list changes.
+
+So let's test the scenario of a node leaving the cluster unexpectedly by killing the right bottom node
+
+as we can see it.
+
+Within the session timeout the leader got notified that the list of nodes changed and now it has only
+
+two nodes in his group of workers.
+
+If that node is restarted and it rejoins the cluster the leader gets notified about it again so we can
+
+see that with this configuration.
+
+Our cluster can grow and shrink dynamically and we don't need any human intervention to update any configurations.
+
+It all just happens automatically.
+
+Finally let's test a scenario of the leader itself leaving the cluster and as we can see the new leader
+
+takes all the old leader's responsibilities and it unregisters itself from the workers pool and
+
+now it has the addresses of all the remaining worker nodes so it can resume any work that the old leader
+
+was planning to distribute to all its workers.
+
+And obviously if the old leader decides to rejoin the cluster again it will join as a worker.
+
+So its address will be registered in the service registry and the current leader will get it instantaneously.
+
+In this lecture we implemented a fully automated service registry and discovery within the cluster using
+
+zookeeper using the service registry nodes can both register to the cluster by publishing their addresses
+
+and the register for updates to get any other nodes address.
+
+We then integrated the service registry with the leader election algorithm using callbacks and finally
+
+we tested our implementation under multiple scenarios which proved our service registry is fully functional
+
+and fault tolerant and by using the service our cluster can scale to any size without any modifications
+
+to the existing nodes and by using these addresses our nodes can establish the communication with
+
+each other which we will learn how to do in the following lectures.
+
+I hope you guys enjoy this and I will see you in the next lecture.

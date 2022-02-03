@@ -1,0 +1,295 @@
+hey guys welcome back 
+
+
+in this lecture we'll talk more in detail about zookeepers threading model
+이번 강의에서는 주키퍼 스레딩 모델에 대해 더욱 자세히 이야기해 볼 것 입니다.
+
+and finally we'll use the Java API to connect our application to the zookeeper server
+그리고 마침내 자바 API 를 사용하여 우리의 어플리케이션으로 주키퍼 서버에 연결 해 볼 것입니다.
+
+let's start with a short discussion about the zookeeper clients libraries threading model
+[주키퍼 클라이언트 라이브러리 스레딩 모델]에 관한 간단한 질의로 시작해 봅시다.
+
+when we start our application the main method is executed on the main thread 
+우리가 어플리케이션의 실행할 때 그 메인 메소드는 메인 스레드에서 구동 됩니다.
+
+when we create the zookeeper object the zookeeper library creates two additional threads 
+우리가 주 키퍼 오브젝트를 생성 할때. 주키퍼 라이브러리는 두개의 추가가능한 스레드를 생성 합니다.
+
+the event thread and the i/o thread 
+[이벤트 스레드]와 [IO 스레드] 입니다.
+
+we don't really interact with the i/o thread directly
+우리는 직접적으로 IO 스레드와 실제 상호작용 하지는 않습니다.
+
+the i/o thread is the thread that handles the network communication between our application in the zookeeper server
+IO 스레드는 주키퍼 서버에 위치한 어플리케이션과 주키퍼 서버간 네트워크 커뮤니케이션을 담당하는 스레드 입니다.
+
+it handles all the zookeepers requests and responses 
+IO스레드는 모든 주키퍼의 요청과 응답을 담당 합니다.
+
+the pings from the zookeeper all the session management timeouts 
+주키퍼로부터 나오는 핑, 모든 세션의 타임 아웃을 관장하고
+
+and so on the event thread is the thread handling all the zookeeper clients state changes events 
+그리고 이벤트 스레드는 모든 주키퍼 클라이언트들의 상태 변경 이벤트를 조절 하는 스레드 입니다.
+
+such as the connection and disconnection from the zookeeper server 
+주키퍼 서버로부터의 접속이라던가 접속 해제 같은 것들을 담당 합니다.
+
+the event thread also handles all the z node watchers and triggers
+이벤트 스레드는 또한 모든 z node 들을 감시자들과 트리거들을 핸들링 합니다. 
+
+we subscribe to we will talk more about Watchers and triggers in a later lecture 
+우리는 와쳐와 트리거에 대해 좀 더 많은 정보를 이후 강의에서 다뤄보도록 하겠습니다.
+
+the implication of this threading model is that all events coming from zookeeper are executed on the event thread 
+스레딩 모델의 의미는 주키퍼로부터 나오는 모든 이벤트는 이벤트 스레드에서 실행된다는 것 입니다.
+
+and are executed in the order of their arrival from the zookeeper 
+그리고 주키퍼에 도작한 순서대로 실행되어 집니다. 
+
+so now that we understand zookeeper clients threading model
+그럼 이제 주키퍼 클라이언트 스레딩 모델을 이해했습니다.
+
+let's go ahead and create our first distributed application 
+우리의 최초 분산 어플리케이션을 생성하는것을 진행해 봅시다.
+
+let's open IntelliJ and create a new project the type of project 
+인텔리 J 를 열고 새로운 프로젝트를 생성 합시다.
+
+we're going to use is a maven project before we proceed
+우리는 메이븐 프로젝트를 이용 할 것입니다,.
+
+I want to say a few words about maven 
+
+
+maven is a build automation tool
+
+that will help us get all our dependencies and build and package the
+
+application very easily if you've never used it before don't worry about it
+
+everything you need to know or use in this course will be provided to you so
+
+now let's go ahead and click Next maven projects ask for a group ID and an
+
+artifact ID which just uniquely identifies our project so we can put
+
+here whatever we want I'm going to type a group
+
+Diaz distributed systems and the artifact ID is going to be a leader
+
+election will leave the version as is and click Next then we choose where to
+
+create a project on our computer and then click finish to create our project
+
+also in this pop-up window we will click on enable auto import to allow mavin to
+
+download all the dependencies for us automatically this prom that XML file
+
+that was created for us is the configuration file for maven project the
+
+first thing we're going to do is to copy and paste this dependency section which
+
+contains only zookeeper but this section does is it tells me then to download
+
+zookeeper library and all its dependencies and add them all to our
+
+projects class path the only thing we need to care about is setting the
+
+version to match with the version of zookeeper server we're running which is
+
+3.4 that 12 in this case the next thing is we need to tell me in which Java
+
+compiler we want to use although there are numerous of Java already I'm just
+
+going to stick to JDK 1.8 here feel free to change it to a newer version that you
+
+have installed on your computer now let's create a new Java class and call
+
+it leader election
+
+inside that class let's create the connect - zookeeper method let's also
+
+define the address of our zookeeper server which is localhost : the port 21
+
+81 in the zookeeper private variable which will store an instance of our
+
+zookeeper object the zookeeper object is our one-stop shop for all the
+
+communication with zookeeper server let's also create the session timeout
+
+constant which we'll set to 3,000 milliseconds the zookeeper server
+
+constantly checks its communication with its client and if the zookeeper server
+
+does not hear anything back from a client for longer than that session
+
+timeout it will consider the client disconnected or dead now in the connect
+
+to zookeeper let's create the zookeeper object and pass the address of the
+
+zookeeper server the session timeout and the watcher object we'll talk a lot more
+
+about Watchers and triggers in the next lecture but essentially zookeeper client
+
+API is a synchronous and event-driven and to get notified about events such as
+
+a successful connection or disconnection we need to register an event handler and
+
+pass it to the zookeeper as a watcher object to be a watcher a class needs to
+
+implement the watcher interface and the process method this process method will
+
+be called by the zookeeper library on a separate thread whenever there is a new
+
+event coming from the zookeeper server when we get a new event we need to first
+
+figure out what type of event it is general zookeeper connection events
+
+don't have any type so when we get an on type we're going to check the zookeeper
+
+state the sync connected State means we successfully synchronized with the
+
+zookeeper server so we are simply going to print out that we successfully
+
+connected to the paper now let's go to the main method create a
+
+leader election object and see what we have so far so we see two things first
+
+of all we have a lot of warnings coming from log4j
+
+saying that we do not have any login information for zookeeper client the
+
+second thing we see is our application ended right after it's started so let's
+
+address the logging warnings first the zookeeper client library uses log4j
+
+library for logging errors warnings and debug information to get all this
+
+information in our console we need to add a small configuration file which you
+
+can reuse for every future project log4j looks at runtime for a file called log4j
+
+dot properties so we're going to create that file inside the resources directory
+
+inside the file we're going to copy and paste the following lines first line
+
+means we're defining a new logger with the name zookeeper and the log level is
+
+debugger that means we will see all the debug information warnings and errors
+
+then in the next two lines we define the appender for the zookeeper logger as the
+
+console appender which means the zookeeper client logs are going to
+
+simply be printed out to the console through the standard output and in the
+
+last two lines we simply define the pattern in which the log lines are going
+
+to be printed out now if we rerun the application we see a lot of debug
+
+information in the console which can be useful for debugging and indeed one
+
+thing we see or more accurately we don't see is the line that says that we
+
+connected to zookeeper and the reason for that is as I mentioned zookeeper is
+
+event-driven the events from zookeeper come on a different thread and before
+
+zookeeper even has a chance to respond to our application and trigger an event
+
+on another thread our application simply finishes so what we're going to do is
+
+create a run method which we will call from the main thread and inside that
+
+method we'll simply put the main thread into a wait state
+
+now if we rerun the application we see that we indeed got a response from
+
+zookeeper on another thread in a form of an event that indicates a successful
+
+connection what we also see is that the zookeeper server now sends us a pink
+
+periodically to check that we are still alive and the connection is intact
+
+in general we don't want to see so much debug information so we're going to go
+
+back to the log for Jade properties file and change the logging level from debug
+
+to warn and now when we rerun the program we see only our message but if
+
+any warnings or errors occur we will see them as well
+
+the next event we want to handle is when we lose connection to zookeeper in that
+
+case we want to wake up the main thread and allow our application to close
+
+resources and exit the way to wake up the main thread is by calling the notify
+
+all on the zookeeper object so let's define the closed method which the main
+
+thread will call inside the closed method will gracefully close all the
+
+resources inside the zookeeper object so once the main thread wakes up and exits
+
+the run method it will call the closed method and print out that we
+
+disconnected from zookeeper after that it will simply exit the application also
+
+let's add a print statement inside the event handler to indicate that we
+
+received a disconnection event so now let's run the application we're now
+
+successfully connected to the zookeeper as before now let's bring back the
+
+console and stop the zookeeper server and as we can see zookeeper client
+
+library lost connection to zookeeper and triggered an event we then handled that
+
+event on the zookeeper event handling thread by printing out that we received
+
+the disconnection event from zookeeper and woke up the main thread then the
+
+main thread woke up called the closed method and application ended to
+
+visualize it with a debugger let's add a breakpoint inside the process method in
+
+the else statement then start zookeeper again run the application in debug
+
+we stopped the zookeeper server we can see that we received a disconnection
+
+event in the frames window we see that we indeed got the event on the event
+
+thread we also see that the timeout is 4,000 which is higher than the session
+
+timeout we set in the zookeeper constructor now let's add a breakpoint
+
+in the run method right after the wait method call and continue and we see now
+
+that the main thread woke up from the wait state executed the last instruction
+
+and exited
+
+in this lecture we'll learn about zookeeper libraries threading model
+
+primarily will learn that zookeeper client creates two additional threads in
+
+our application the i/o thread which handles the connection between our app
+
+and the zookeeper server and they vet thread on which we get all the events
+
+coming from the zookeeper server we learn how to connect to zookeeper and
+
+handle connection and disconnection events and also we learn how to debug
+
+our zookeeper related code using the logging levels in the log4j the
+
+properties config and the debugger in the IDE
+
+in the next lecture we'll continue where we left off and get to the fun part
+
+which is the implementation of the leader election algorithm thank you and
+
+I will see you soon in the next lecture

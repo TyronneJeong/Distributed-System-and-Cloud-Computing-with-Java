@@ -1,0 +1,399 @@
+hey guys welcome back 
+
+in this lecture we will learn to configure and start zookeeper on our computer 
+이번 강의에서는 우리의 컴퓨터에 주키퍼를 구성하고 시작하는 방법에 대해알아 볼 것입니다.
+
+then we will briefly cover the zookeeper command-line client which will help us in debugging  and visualizing our Z nodes hierarchy
+그 다음 디버깅하고 z node 의 계층 구조를 시각화 할때 도움이 되는 주키퍼 커맨드 라인 클라이언트에 대해 훑어 볼 것입니다.
+
+but first of all let's get some minor detail out of the way
+하지만 우선 방법중 덜 중요한 부분을 살펴봅시다.
+
+a good question you may ask is how are we going to develop a distribute system
+당신이 물어볼 좋은 질분은 우리가 어떻게 분산 시스템을 개발해볼 수 있나요? 입니다.
+
+if we don't have multiple computers sitting around and remote development on
+만약 둘러 앉은 자리 주변에 다수의 컴퓨터가 없다면 그리고 원격 개발환경으로 클라우드에
+
+multiple cloud machines is really inconvenient and expensive 
+다수의 머신을 가지고 있다면 정말 불편하고 비쌀 것입니다.
+
+well I have some good news for you 
+이 부분에서 당신에게 줄 좋은 소식이 있습니다.
+
+a typical development of distributed systems is actually done in a traditional way 
+일반적으로 분산 시스템의 개발은 전통적인 방식 내에서 다 해결 됩니다.
+
+which is simply local development on your machine 
+당신의 컴퓨터에 간편한 로컬 개발 환경 구성하는 방식으로요.
+
+so we can write code debug and test locally within the comfort of our IDE 
+그래서 우리는 코드를 작성 하고 디버깅 하고 테스트가 IDE 내에서 가능 합니다.
+
+generally the next step after local development is for our application to be
+일반적으로 로컬 개발 다음 단계는 우리 어플리케이션이 프로덕션 위에 배포되는 것입니다. 클러스같은 것에 배포되는것
+
+deployed on a production like cluster and go through Quality Assurance 
+그리고 품질 검사를 통과하는 것.
+
+and
+그리고
+
+later be deployed on a production cluster 
+다음으로 프로덕션 클러스터에 배포되는 것입니다.
+
+in this course we will develop
+이번 과정에서 우리는 개발과
+
+and test locally and in a later stage we will deploy our application on the cloud
+테스트를 로컬에서 할 것입니다. 그리고 난 다음 우리의 어플리케이션을 클라우드에 배포 할 것입니다.
+
+so now let's go ahead and configure and start zookeeper
+그러니 이제 주키퍼를 구성하고 시작하러 가 봅시다.
+
+
+
+first of all let's open our web browser and go to zookeeper Apache.org/releases 
+먼저, 우리의 웹 브라우저를 엽니다. 그리고 주키퍼 아파치 재단 홈페이지로 접속을 합니다.
+
+in that URL we will find the latest release of zookeeper then under
+그럼 최신 버전의 주키퍼를 찾을 수 있습니다. 그 다음 
+
+the download section we'll click on download on the next page 
+다음페이지의 다운로드 섹션 아래 다운로드 버튼을 클릭 할 것입니다.
+
+we will go to the closest mirror site recommended for us to download the binaries 
+그럼 가장 가까운 미러사이트에서 바이너리 다운로드를 추천받게 됩니다.
+
+from there are many other options to choose from but I'm okay with the one recommended to me 
+그곳에는 선택할 수 있는 다양한 옵션들이 있습니다. 하지만 저에게 한가지 추천만 곁들인다면 좋습니다.
+
+so let's click on that here we can find all the latest zookeeper versions
+그럼 우리가 찾아 볼 수 있는 모든 최근 버전의 주키퍼에 붙어 있는 저것을 클릭해 봅시다.
+
+but we're going to go for the current stable version and click on the archive
+하지만 우린 현재 안정화된 버전의 주키퍼를 선택 할 것입니다. 그리고 아카이브 파일을 다운로드 합니다.
+
+file to download once the download is complete we're going to move the archive
+다운로드가 종료되면 우리는 파일을 이동 할 것입니다. 각자 편리한 장소로, 
+
+file to a convenient location for us then unpack the archive and delete the
+그 다음 압축파일을 해제합니다. 그리고 더이상 필요없는 GC파일을 삭제합니다.
+
+GC file as we no longer need it
+
+
+
+inside the zookeeper folder we will find everything 
+주키퍼 폴더 안애서 우린 모든걸 찾을 수 있습니다.
+
+we need such as the binaries all its dependencies the source code
+우리는 바이너리 같은게 필요합니다. 소스코드에 연관된.
+
+with the documentation and so on the important parts for us are the bin
+문서 파일과 함께 말이죠. 그리고 지금 우리에게 가장 중요한 파트는
+
+directory which contains the scripts to run and control zookeeper and the conf
+쥬키퍼를 제어할 수 있는 스크립트 파일을 포함하고 있는 bin 디렉토리와 주키퍼의 설정을 포함하고 있는 conf 
+
+directory which contains zookeepers configuration 
+디렉토리 입니다.
+
+let's start with creating a folder called logs
+그럼 logs 폴더를 생성하러 가봅시다.
+
+which will store all zookeepers logs files 
+주키퍼의 모든 로그들을 저장하는 폴더.
+
+later we'll go to the Conf directory inside 
+이후 conf 디렉토리 안으로 들어가면
+
+we can find a few configuration files 
+몇몇 설정 파일을 찾을 수 있습니다.
+
+the one we care about is the zookeeper sample dot config file to save ourselves 
+이중 신경 써야 하는 것은 주키퍼 샘플.config 파일로
+
+some time we'll simply reuse that sample file by renaming it to zoo.config which is
+때때로 해당 샘플 파일을 간단 하게 재사용 할 겁니다. 
+
+the name of the file that zookeeper will look for during runtime 
+주키퍼가 동작하는 동안 검색하게 될 이 이름의 파일 zoo.config 파일
+
+this config file will configure zookeeper to run as a standalone server 
+이 설정 파일은 주키퍼를 스탠드얼론 서버로 동작 하게끔 설정 합니다.
+
+in other words it will run as a simple process instead of as a cluster 
+다른 의미로 이 파일은 클러스터 대신에 단순한 프로세스처럼 동작하게 됩니다.
+
+which is exactly what we want in our development environment 
+이것은 정확하게 우리가 개발 환경에서 원하는 것입니다.
+
+let's open this file and modify only one parameter
+해당 파일을 열어 하나의 파라미터를 수정 합니다.
+
+the data directory which will point to the logs directory we created earlier
+데이터 디렉토리. 이 디렉토리를 이전에 우리가 만든 로그 디렉토리를 사리키도록 합니다.
+
+all those parameters are not so important for us to know right now but
+저기 모든 파라미터들은 지금 당장 우리가 알 필요는 없습니다. 하지만
+
+one parameter I do want to point out 
+단 하나의 짚고 넘어가야할 하나의 파라미터 
+
+it's the client port which configures
+그것은 클라이언트 포트 입니다.
+
+the port which zookeeper will listen for our client applications 
+그 포트는 주키퍼가 우리의 클라이언트 어플리케이션으로 부터 수신받기 위한 포트 입니다.
+
+we will keep it as 2181 and that's the value we're going to use in our code 
+해당 포트는 2181을 그대로 유지합니다. 그리고 해당 값을 우리의 코드에 사용합니다.
+
+and that's it 
+그런 다음 끝입니다.
+
+this configuration step has to be done only once and we do not need to touch it anymore
+이 설정 단계의 하나의 스탭이 완료되었습니다. 그리고 더이상 다른 것들은 필요없습니다.
+
+now that we have configured zookeeper 
+이제 우리는 주키퍼 설정을 마쳤습니다.
+
+let's go ahead and start it 
+계속 진행해 봅시다. 그리고 시동을 켜 봅시다.
+
+so let's open the shell terminal or command line depending on how it's called in your operating system 
+그럼 당신의 운영체제에 속한 쉘 터미널을 열거나 커맨드 라인을 실행 시킵니다.
+
+and navigate to where zookeeper is located which is the bin directory
+그리고 주키퍼가 있는 bin 디렉토리로 이동 합니다.
+
+this directory contains all the scripts we need to control zookeeper 
+bin 디렉토리는 우리가 주키퍼를 조작하는데 필요한 모든 스크립트를 포함하고 있습니다.
+
+the scripts ending in CMD are for Windows in the scripts ending in SH or for Linux and Mac OS 
+CMD 로 끝나는 스크립트 파일들은 윈도우를 위한 것입니다. sh 로 끝나는 스크립트들은 리눅스와 맥 OS 를 위한 것입니다.
+
+so for example to run the zookeeper server script on Windows 
+그럼 예를 들어 주키퍼 서버 스크립트를 윈도우에서 실행 하기 위해서는
+
+you would simply use zkServer.CMD but since I'm using a Mac I'm going to run the zk server.Sh script 
+zkServer.cmd 라고 입력 하면 됩니다. 하지만 저는 맥을 이용하기 때문에, zkserver.sh 실행해야 합니다.
+
+when we run it without any arguments it prints out all the options we can use
+별도의 아규먼트 없이 실행할 때에는 스크립트는 우리가 사용가능한 모든 옵션들을 보여 줍니다.
+
+to actually start the server we will use the ZKServer.Sh with the start parameter 
+실제 서버 시작을 위해서는 zkserver.sh start 파라미터를 함께 사용할 겁니다.
+
+and here we go 
+그리고 출발 합니다.
+
+that's all we need to get our zookeeper server up and running 
+이것들이 우리가 서버를 기동하고 실행하는데 필요한 전부 입니다.
+
+now before we start writing any Java code to communicate with zookeeper 
+이제 약간의 자바 코드 작성을 통해 주키퍼와 통신하기 이전에 
+
+let's learn a small command-line tool to help us both visualize and debug what is going on inside zookeeper
+디버깅이나 주키퍼 내부에 무슨일이 벌어지고 있는지를 보여주도록 우리를 돕는 커맨드 라인 도구에 대해 알아 봅시다.
+
+in that same bin directory where we found the ZK server script will also find the ZKCLI script which steps for zookeeper client
+zkserver 스크립트를 찾았던 동일 bin 디렉토리에서 우린 주키퍼 클라이언트를 위한 zkCli.sh 파일 또한 찾을 수 있습니다.
+
+this is just an app that connects to zookeeper and allows us to send zookeeper commands without writing any Java code
+이 파일은 주키퍼와 연결하고 별도의 자바 코드 작성 없이 명령어를 전달하기 위한 어플리케이션 입니다.
+
+so let's run it and as you can see it looks very familiar to a normal shell 
+그럼 해당 파일을 실행해 보면, 일반 적인 shell 과 동일하게 생긴 것을 볼 수 있습니다.
+
+so if we type help we get all the commands that the client provides us
+그리고 help 라고 입력하면 클라이언트 도구가 제공 하는 모든 커맨드를 볼 수 있습니다.
+
+so for example we have a very familiar-looking LS command which will show us all the Z nodes in a particular path
+예를 들어 특정 경로의 모든 z node 들을 우리에게 보여주는 매우 친숙한 LS 명령어가 있습니다.
+
+let's run LS of our root Z node 
+우리의 root z node 에 ls 를 실행해 봅시다.
+
+
+#> ls /
+
+
+and we can see that the only Z node 
+그러면 z node 오직 하나만 볼 수 있습니다.
+
+we have right now is the zookeeper Z node which is used internally by zookeeper 
+지금 당장은 내부적으로 주키퍼가 사용하는 그 zookeeper z node 입니다.
+
+let's see how easy it is to create a hierarchy of a parent and a child Z node 
+그럼 얼마나 손쉽게 부모 자식 노드를 생성 할 수 있는지 알아 봅시다.
+
+we'll use the create command which takes the path we want to create 
+우리가 생성하길 원하는 장소를 포함하여 create 명령어를 이용할겁니다.
+
+and the data our Z node will store 
+그리고 data 파라미터는 z node 에 저장될 부분입니다.
+
+the ACL parameter stands for access control list 
+ACL 파라미터는 Access Control List 의 약자입니다.
+
+which we can ignore at the moment 
+당장은 해당 파라미터는 생략 가능 합니다.
+
+so let's create a Z node called parent under the root Z node and
+그럼 루트 노드 아래에 파렌츠라 불리는 z node 를 생성해 봅시다. 그리고
+
+
+
+#> create /parent "some aprent data"
+Created /parent
+
+#> ls /
+[parnet, zookeeper]
+
+
+
+put some data in it 
+데이터를 넣어 봅시다.
+
+and we can see that now we have two Z nodes under the root Z node 
+그럼 루트 노드아래에 2개의 z nodes 가 생긴걸 볼 수 있습니다.
+
+now let's create the child Z node under the parent we just created 
+이제 자식 z node 를 방금 생성한 부모 노드 아래에 생성 해 봅시다.
+
+
+
+#> create /panrent/child "some child data"
+Created /parent/child
+# ls /parent
+[child]
+
+
+
+and put some data in it 
+그리고 데이터를 입력해 봅시다.
+
+as well if we run the LS command on the parent 
+그리고 부모 노드에서 ls 명령어를 실행 해보면
+
+we can see that the child resides under it just like a file inside a directory 
+자식 노드들이 부모 노드 아래에 디렉토리 내 포함된 파일 형태로 존재하는걸 있는걸 볼 수 있습니다.
+
+to get the information about a particular Z node we can use the get command 
+특정 z node 에 관한 정보를 얻기 위해서는 get 명령어를 사용할 수 있습니다.
+
+so for example
+예를 들면
+
+
+
+#>get /parent
+some parent data
+cZxid = 0x14e
+cversion=1
+dataversion =0
+aclversion =0
+...
+
+
+
+the parent Z node shows us the data stored in it 
+부모 z 노드는 get 명령어로 부모 z 노드가 가지고 있는 데이터를 보여줍니다.
+
+the data when it was created and modified the version is 1 
+데이터가 언제 생생되었는지 그리고 언제 수정 되었는지 에 버전은 1입니다.
+
+since it was modified once after was created that's because adding a child to a Z node () qualifies as a modification 
+파일이 생성된 이후로 단 한번 수정 되어졌습니다. 수정된 이유는 z node 아래에 자식 노드를 추가한것이 수정과 같은 역할이기 때문입니다.
+
+and in the bottom we can see that the number of children is one just like we expect 
+그리고 바닥에서 확인 가능한 차일드 노드의 수는 1입니다. 예상했듯이.[numChildren]
+
+if we run the get command on the child Z node 
+이제 차일드 노드에서 get 명령어를 실행하면 
+
+we can see its internal data in a similar fashion 
+비슷한 모양새로 차일노드의 내부 데이터를 볼 수 있습니다.
+
+
+
+
+#> get /parent/child
+some child data
+cZxid = 0x14e
+cversion=1
+dataversion =0
+aclversion =0
+...
+ 
+
+
+
+the C version is 0 since it was created
+갓 생성되었기 때문에 cversion 값이 0 입니다.
+
+and never modified and it has 0 children
+그리고 자식 노드가 생성된 이후로 그리고 한번도 수정되지 않았기 때문에 이 녀석은 0개의 차일드를 가집니다.
+
+now let's remove those Z nodes by using the RMR command on the parent z node
+이제 parent 노드에서 rmr 명령어를 이용하여 저 z node 를 삭제해 봅시다.
+
+which would delete both the parent and the child 
+부모와 자식 노드 모두를 삭제할
+
+
+
+#> rmr /parent
+#> create /election ""
+Created /election
+#> ls /
+[election, zookeeper]
+
+
+
+and let's create the election
+그리고 election 노드를 생성해 봅시다.
+
+z node for our leader election algorithm without any data 
+우리의 리더 선출 알고리즘에서 z node 는 어떤 데이터도 가지고 있지 않습니다.
+
+and that's it we're done with the client command line for right now 
+그리고 이것입니다. 클라이언트 커맨드 라인을 이용하여 지금 완성 했습니다.
+
+let's summarize what we learned 
+우리가 배운 것을 요약해 봅시다. 
+
+so far learn how to install configure and run zookeeper 
+지금까지 주키퍼를 설정하고 실행하는 것을 배웠습니다.
+
+most of those configurations are just a one-time task 
+대부분의 설정 작업은 일회성 작업입니다. 
+
+but it was important to get it out of the way 
+하지만 해당 작업은 방법중 가장 중요합니다.
+
+before we can get to the interesting stuff
+우리가 주키퍼에 흥미로운 내용을 살펴 보기 전
+
+we also learned how to use the zookeeper command-line client
+우리는 주키퍼 커맨드 라인 클라이언트를 어떻게 사용하는지를 알아야 합니다.
+
+which is a great tool for visualizing our current state of the zookeeper screen 
+우리의 현재 상태를 보기 위한 중요한 도구인
+
+
+and is also very handy for debugging 
+그리고 아주 간편한 디버깅 도구 임도 알아야 합니다.
+
+I want to reiterate that although zookeeper client makes those Z nodes look like real files on our computer 
+반복하고 싶은것은, 주키퍼를 이용하여 만든 저 z nodes 들은 실제 파일 처럼 보이겠지만
+
+there are no z node files stored anywhere in our file system 
+저기엔 z node 파일들은 저장되지 않습니다.
+
+it is just a representation of the data model stored within zookeepers memory
+이것은 주키퍼 메모리 내부에 저장된 데이터 모델의 표현일 뿐입니다.
+
+can't wait to see you all in the next lecture

@@ -1,0 +1,84 @@
+Bonus Material
+Congratulations!
+
+We now have all the skills and knowledge to build a scalable and reliable distributed system and deploy it on multiple computers on the cloud.
+
+Software Architecture & Design of Large Scale Systems
+This course is perfect for you if you want to take your career to the next level and master Software Architecture and System Design. It complements the Distributed Systems & Cloud Computing with Java course perfectly by focusing on the design phase of large scale systems.
+Throughout the course you will learn how to:
+
+Analyze complex requirements
+
+Design robust & easy use APIs
+
+Use modern architectural building blocks and databases for high scalability, availability, and performance
+
+Architect the system using industry-proven architectural patterns and best practices.
+
+By the end the course, you will be able to take on a high-level, ambiguous requirement and take it through the entire design phase, all the way to its final software architecture.
+
+Check out the course description, and I look forward to taking you with me on this exciting journey.
+
+Course Latest Coupon: ARCH_SUNNY_DEC_21
+
+Java Multithreading, Concurrency & Performance Optimization
+But let's not forget that each node in our distributed system runs on a single computer, so making each application instance fast and responsive will improve our entire distributed system performance.
+
+The best part is, when we operate on a large scale, even a small gain in performance in each instance can lead to big cost saves for our company and have an enormous impact on many users.
+
+This is where the Java Multithreading, Concurrency & Performance Optimization comes in.
+
+In this course, we will learn everything we need to become successful multithreaded application developers.
+
+By the end of the course, we'll be able to build and optimize our multithreaded programs to get the most out of our computer hardware.
+
+Follow this link for the complete course description and I look forward to joining me on this exciting journey.
+
+Current Coupon Code BRIGHT_DEC_2021
+
+
+
+Advanced Java Topics: Java Reflection - Master Class
+For those of you who want to have full control of your system inside-out, and architect not only powerful and flexible distributed systems but also applications, libraries, and frameworks go no further.
+
+This next course on Java Reflection will take you one big step towards complete mastery of Java, and will teach you one of its most advanced and useful features.
+
+In the Advanced Java Topics: Java Reflection - Master Class course, we will learn a new API and set of tools to utilize your JVM's capabilities to its full potential.
+
+Reflection allows a Java program to "examine" or introspect upon itself. This opens the door to building powerful applications, algorithms, and libraries that were impossible to create otherwise.
+
+In this course, we will start from the basics and build our way up to complete mastery of Java Reflection, through theory, and practical application of our skills in real-life examples and use cases.
+
+By the end of the course, you will be able to build and architect your own unique applications and algorithms powered by Java Reflection.
+
+Check out the course description, and I look forward to taking you with me on this exciting journey.
+
+Course Latest Coupon: SUNNY_DEC21
+
+
+
+Java Multithreading and Concurrency - Interview Practice Exams
+Are you ready to be challenged and put your Java multithreading and concurrency knowledge to the test?
+
+Despite the course title, you don't need to wait for stressful interview to practice concurrency. This unique collection of 100+ multiple-choice questions is the perfect place for you to practice everything you ever learned about Java Multithreading, Concurrency and Performance Optimization in Java
+
+Java Multithreading & Concurrency - Interview Practice Exams is also a great resource for you to periodically refresh your knowledge and keep your skill set up to date.
+
+To get full access to this practice course enroll now using this link.
+
+Course Latest Coupon: CONCUR_DEC_21
+
+
+
+Support Your Instructor
+
+When a course is purchased, without an instructor's coupon, the instructor earns only a small portion of the sale price.
+
+If you'd like to support your instructor's hard work, please use the links above when purchasing the course.
+
+Thank you!:)
+
+
+
+Let's Connect
+If want to be the first to hear about upcoming courses, articles or just stay in touch, feel free to connect with me on LinkedIn.

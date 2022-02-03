@@ -1,0 +1,301 @@
+hey guys welcome to the first lecture 
+첫 강의에 오신걸 환영 합니다.
+
+in this first lecture we'll get the motivation behind distributed systems by having an overview of where we can find them 
+이번 첫 강의에서 우리는 분산 시스템에 대해 어디서 찾을 수 있고, 어떤 문제를 보여왔는지, 그리고 분산 시스템이랑 무엇인지에 대해 정의내릴 것입니다. 그리고 몇 도전과제들(이번 과정 동안 문제를 해결하는 것을 배울 것입니다.)에 대해 언급될 것입니다. 
+
+and what problems they saw for us and we'll conclude by defining what a distributed system is and mentioned some of the challenges that come with architecting such a system which we will learn to solve during the course .
+그리고 그들은 어떤 문제점들을 보았는지. 그리고 우리는 분산 시스템이라는 것에 대한 정의를 어떻게 결론지을 것인지. 그리고 이 과정을 진행하는 동안 우리가 배울 시스템 아키텍트를 이용하여 설계시 마주할 몇몇 첼린지에 대해 다루어 볼 것입니다.
+
+so where can we find distributed systems 
+그럼, 우리는 분산시스템을 어디서 찾아 볼 수 있을까요?
+
+distributed systems are everywhere 
+분산 시스템은 어디에나 있습니다.
+
+every time we 
+- watch a movie on demand 
+- shop online 
+- Order a ride share service through our mobile phone 
+우리가 원할때 영화를 보거나
+온라인 쇼핑을 하거나
+모바일 폰을 이용해 공유 쉐어링 주문을 넣을때
+
+or search something on the internet infact communicate with a distributed system hidden from us by a web page or an app 
+또는 웹페이지나 앱을 통해 무언가를 검색할 때 사실 우리가 인지하지 못하는 사이 분산 시스템과 통신하고 있습니다.
+
+all those companies that provide us with those services are running highly scalable 
+이런 서비스를 제공하는 모든 회사들은 매우 큰 규모의 고가용성 분산 시스템 서비스로 동작합니다.
+
+massively distributed systems all around the globe to be able to handle millions of users and petabytes of data every single day
+지구 곳곳의 엄청난 규모의 분산 시스템으로 수백만의 사용자들과 페타바이트 단위의 데이터를 매일 이용가능 하게 합니다.
+
+and give us the users a consistent and seamless user experience 
+그리고 그 유저들에게 일관되고 원활한 사용자 경험을 제곱 합니다.
+
+furthermore even the simplest website hosted on the cloud is actually running on a distributed system 
+좀더 보태자면 심지어 클라우드에 호스팅 되는 단순 웹 사이트 조차도 사실 분산 시스템에서 동작하고 있습니다.
+
+as the cloud itself is a complex distributed system built specifically for companies and asked the software developers 
+클라우드 자체는 기업들과 소프트웨어 개발자들을 위해 특별히 고안된 시스템입니다.
+
+so we can focus on our product and let the cloud vendors handle all the rest 
+때문에 우리는 우리의 제품에 집중 할 수 있고, 클라우드 벤더는 나머지를 담당 할 수 있습니다.
+
+the beauty of a well designed and well implemented distributed system is that you're not even aware of it or its complexity 
+잘 디자인 된 것의 장점과 잘 구현된 분산 시스템은 당신이 그 시스템의 복잡성을 알지 못해도 됩니다.
+
+it just works 
+그냥 동작하는 것입니다.
+
+it makes you feel like you're communicating with a single computer on the other side of the internet connection dedicated specifically for you 
+이런 분산 시스템은 마치 단일 컴퓨터와 커뮤니케이션 하는 듯한 느낌마져 줍니다.
+
+
+so what makes distribute system so appealing 
+
+let's try to understand it by analyzing a centralized system which is the opposite of a distributed system first 
+때문에 어떤점이 분산 시스템의 매력인지에 대해 알아보도록 합시다. 분산시스템과 반대로 중앙집중형 시스템을 먼저 분석하면서 이에 대해 알아 봅시다.
+
+
+
+let's say we have a startup idea
+우리가 스타트업 아이디어를 가졌다고 가정해 봅시다.
+
+and we want to reach our users through a website or an app 
+그리고 우린 웹사이트나 앱을 통해 고객에게 닿기를 원하고 있습니다. 
+
+for example we want to create a new online shopping experience where people can buy computer or video
+예를 들어 우린 새로운 온라인 쇼핑을 만들길 원합니다. 컴퓨터나 비디오 게임을 사고 해당 제품에 대한 리뷰를 그들의 친구들과 공유할수 있는 웹사이트
+
+games and share reviews on those purchases with their friends 
+를 만들길 원합니다.
+
+so we go ahead and build an awesome-looking website and a sleek mobile app and
+때문에 우린 아주 대단해 보이는 웹사이트와 세련된 모바일 앱을 만듭니다. 만듭니다. 그리고 
+
+decide to host a web server on a spare computer we have in our garage 
+게러지에 남는 컴퓨터를 이용하여 이를 호스팅 하기로 결정 합니다.
+
+
+as our user base grows our computer can no longer keep up with the number of requests and the data it needs to store 
+사용자 기반인 우리 컴퓨터는 더이상 스토어가 필요로 하는 데이터 사용 요청을 처리할 수가 없게 되었습니다.
+
+so we decide to upgrade the computer to the latest and greatest most powerful computer we can find
+때문에 우리는 우리가 할수 있는 가장 최신의 컴퓨터로 업그레이드 하기로 결정 합니다.
+
+that type of upgrade for a system is also referred to as vertical scaling 
+이런 타입의 업그레이드를 수직적 스케일링 이라고 부릅니다.
+
+but unfortunately
+하지만 불행히도
+
+that upgrade only delays the real problems waiting for us around the corner 
+이 업그레이드는 단지 코너로 몰리고 있는 실제 문제를 지연시킬 뿐이였습니다.
+
+as the traffic to our system keeps increasing the performance and the
+우리의 시스템 트래픽이 계속 증가함에 따라 퍼포먼스와 메모리는 병목을 일으켰습니다. 그리고 더이상 컴퓨터를 업그레이드
+
+memory become a bottleneck and there is no way for us to upgrade that computer anymore.
+할수 있는 방법이 없습니다.
+
+after all there is just so much memory and compute power we can get from one single machine .
+결국 시스템은 단일 머신에 너무많은 메모리와 컴퓨팅 파워를 싣게 되었습니다.
+
+so far their vertical scaling is no longer an option for us
+고로 더욱 깊은 수준의 수직 스케일링은 더이상 우리의 선택사항이 아니게 되었습니다.
+
+while our computer already runs hot we realize another problem our computer is
+우리의 컴퓨터가 이미 과부하에 걸릴동안, 우리는 또다른 문제를 깨달았습니다. 컴퓨터가 실제 single point of failure
+
+actually a single point of failure 
+가 발생하는 문제였습니다. (SPOF: Single Point of Failure : 단일 장애점. 하나의 시스템 고장이 전체 장애로 번지는 문제)
+
+if there is a power or network outage in our area or we simply need to restart the computer to do some maintenance our entire service would go down
+만약 우리 구역에 파워 또는 네트워크 정전이 일어난다면, 또는 시스템 유지보수를 위해 전체 서비스의 재시작을 해야할 상황이 발생한다면
+
+that would lead to a big loss in revenue and most importantly the loss of our users trust 
+위 상황은 중대한 손실로 이어지고 가장 중요한 문제로 고객의 신뢰를 잃게 된다.
+
+another problem is now users from other
+또다른 문제는 현재 다른 대륙에 있는 유저들이다. 대기시간은 거리에 따라 증가함에 따라.
+
+continents who want to check out our website are faced with bad experience in
+우리의 웹사이트로부터 느린 페이지 갱신과 페이지 로드로 부터 나쁜 경험을 마주 하게 되는 유저들이 문제다.
+
+a form of slow page load as the latency toward computer grows with distance 
+
+
+and
+그리고
+
+there is no way for us to improve that latency in this current configuration
+현재 설정으로는 레이턴시를 향상 시킬 방법이 우리에게는 없다.
+
+and last but not least our computer is open to the Internet
+그리고 마지막으로 최신의 우리의 컴퓨터는 인터넷에 연결되어 있다는 것도 문제이다.
+
+which makes it vulnerable to hackers DDoS attacks and many other threats that
+(어떤 인터넷?) 해커의 DDos 공격으로 부터 취약한 상태가 될수 있는 인터넷. 그리고 다수의 많은 위협
+
+a centralized system just cannot handle so security and privacy also become a
+중앙집중형 시스템의 위협은 보안으로 해결되지 않는다. 그리고 개인정보 역시 
+
+real concern luckily for us 
+우리의 관리사항이 됩니다.
+
+
+a well architect a distributed system can scale to billions of users all around the world and handle and securely store
+좋은 분산 시스템 아키텍트는 전세계 수억명의 사용자를 핸들링 할 수 있고 페타바이트의 데이터와 우리의 고객들에게 원활한 사용자 경험을 제공하는데
+
+petabytes of data and give our customers a seamless user experience no matter where they are and what device they are using
+어디에 있다거나 어떤 장치를 사용하는지 문제가 안된다.
+
+and the horizontal scalability features allows our system to grow and shrink on demand and allows us to
+그리고 수평적 확장성의 특징은 요구에 따라 확장 또는 축소를 허용 할 수 있다. 그리고 분산 시스템은 최대 비용 효과를 우리에게 허용한다.
+
+maximize the cost efficiency of running our services 
+
+so before we started learning how to build such distributed systems 
+때문에 이런 분산 시스템을 어떻게 구축하는지에 대해 우리가 이를 공부하기에 앞서. 
+
+let's define exactly what we mean by that term 
+우리가 의미하는 단어에 대한 정확한 정의를 해보자. 
+
+a distributed system is a system of several processes running on different computers communicating with each other
+분산 시스템이란 각기 다른 컴퓨터에서 동작하면서 통신하는 단일 프로세스 시스템이다.
+
+through the network and are sharing a state or working together to achieve a common goal 
+네트워크와 상태 공유를 통하여 공통된 목적을 달성한다.
+
+although it's a short definition there is a lot in it 
+다만, 이건은 간략한 정의이고. 분산 시스템에는 많은 것들이 포함되어 있다.
+		  
+so let's discuss the highlighted components one by one 
+때문에. 중요한 하일라이트에 대해 하나씩 논의해보자.
+
+first let's have a refresher on what a process is 
+가장 먼저 프로세스란 무엇인지 환기해보자.
+
+after we compile our application into an executable class or a jar file 
+다음으로 실행가능한 클래스 또는 jar 파일로 어플리케이션을 컴파일 한다.
+
+it's stored on the file system just like any other text music or image file 
+그리고 해당 어플리케이션은 텍스트 파일이나 음악 또는 이미지 파일들과 같이 파일 시스템에 저장된다. 
+
+when we launch the application the operating system creates
+우리가 어플리케이션을 구동 했을때. 운영체제는 어플리케이션의 인스턴스 하나를 메모리에 생성한다.
+
+an instance of that application in the memory 
+
+that instance is called a process
+이때 생성된 인스턴스를 우리는 프로세스라 부른다.
+
+that process is entirely isolated from any other process running on the same computer 
+이 프로세스는 동일 컴퓨터내에 다른 프로세스들과는 전적으로 분리되어져 있다.
+
+no matter if the other processes are instances of the same
+만약 그 다른 프로세스 동일 어플리케이션의 프로세스 또는 동일 기기에서 동작중인 다른 어플리케이션의 프로세스 일지라도 
+
+application or instances of different applications processes running on the same machine can communicate with each other 
+상호 소통하는데에는 아무런 문제가 되지 않는다.
+
+through the network the file system and the memory through some advanced techniques that the operating system provides 
+네트워크를 통하거나 파일 시스템, 운영체제가 제공하는 진화된 메모리 기술을 통해 가능하다.
+
+this however is still not a distributed system because all the processes are running on the same machine 
+하지만 이건 여전히 분산 시스템이 아니다. 왜냐하면 모든 프로세스가 동일 머신에서 구동 되는 중이기 때문이다.
+
+they're still sharing all the resources and cannot scale beyond the capacity of that particular computer 
+여전히 모든 자원을 공유하고 있으며, 특정 컴퓨터의 케파를 상회하도록 스케일 할 수도 없다.
+
+so if we put each process on a separate machine those processes are completely decoupled from each other 
+때문에 만약 우리가 각 프로세스를 분리된 머신에 넣고자 한다면, 저 프로세스들이 서로 완벽하게 분리되어져야 한다.
+
+they can scale horizontally as much as needed meaning
+분리된 프로세스들은 우리가 원하면 원할수록 수평적으로 확장이 가능하다. 
+
+we can keep adding more and more machines as we need to extend our memory or processing power.
+우리는 계속해서 더 많은 머신을 추가 할 수 있다. 우리가 확장하길 원하는 메모리와 프로세싱 파워 만큼
+
+and if some machines become unavailable or break down other processes keep functioning 
+그리고 만약 어떤 머신리 이용불가능 하게 되거나 브레이크 다운 되더라도 다른 프로세스들이 그 기능을 유지한다.
+
+and overall our system can stay available and continue performing its tasks 
+그리고 전체적으로 시스템은 가용성을 유지할 수 있고 작업을 계속 지속할 수 있다.
+
+that is actually not trivial to achieve but
+이것들은 사실 달성 하기 쉬운 것이 아니다. 하지만 우리는
+
+we'll learn how to build such algorithms in the following lectures 
+따르는 다음과 같은 알고리즘 강의를 통해 어떻게 구축하는지를 배울 것이다.
+
+also the decoupling of the processes and placing them on different machines left us with
+또한 프로세스간 통신을 위한 하나의 선택 사항처럼 네트워크를 이용하여 다른 머신에서의 프로세스를 분리하고 이를 교체할수 있다.
+
+the network as the only option for communication between the processes
+
+and finally once we establish that communication our job is build those processes in such a way 
+우리의 작업들간 소통은 다음과 같은 방식으로 빌드 되어 지도록 우리는 최종 작업 합니다.
+
+that they would maintain a shared view of the world in a form of a state
+이걸로 스테이트 형태로 전 세계에 동일한 관점으로 공유되어 관리될것입니다.
+
+or work together to achieve a common goal
+아니면 공동 목표 달성을 위해 함께 작업 할 것입니다.
+
+otherwise if each process doesn't know anything about the other 
+반대로, 만약 각 프로세스가 다른 프로세스에 대해 아무것도 모른다면
+
+it's not a distributed system but just a collection of computers 
+이건 분산 시스템이 아닙니다. 그저 컴퓨터의 집합일 뿐입니다.
+
+so our goal is going to be building the algorithms in such a way
+때문에 우리의 목표는 다음과 같은 방법으로 알고리즘을 만드는 것입니다.
+
+that processes can collaborate with each other and constantly make progress towards that goal 
+(알고리즘) 프로세스는 각 프로세스들간 콜라보할수 있습니다. 그리고 지속적으로 목표를 향해 앞으로 진행할수 있습니다.
+
+so let's quickly summarize 
+그럼 빠르게 요약해 봅시다.
+
+what we've learned in this lecture first of all 
+우리가 첫번째 강의를 통해 배웠던 것은
+
+we got the motivation behind distributed systems and realize that we interact with such
+분산 시스템에 대한 동기를 얻는 것입니다. 그리고 
+
+systems every time we use digital services through the web 
+우리가 사용하는 디지털 서비스를 통해 매일 분산 시스템을 접하고 있다는 것을 깨달았습니다.
+
+we'll learn about the inherent problems in centralized systems and 
+중앙통제형 시스템의 내제된 문제에 대해 배울 것입니다. 그리고
+
+the importance of designing our system to scale to multiple machines 
+다수의 머신에서 확장 하기 위한 시스템 디자인의 중요성에 대해서도 배울 것입니다.
+
+we define the distributed system as a system of several processes running on different
+네트워크 통신을 통해 각 다른 컴퓨터에서 서로 소통하는 몇 프로세스와 같이 우리는 분산 시스템을 정의합니다.
+
+computers communicating with each other through the network 
+
+and they're sharing a state or are working together towards a common goal
+그리고 이 분산 시스템은 상태를 공유하거나 공동 목표를 위해 같이 동작합니다.
+
+designing distributed systems is not easy and it's no coincidence that the
+분산 시스템 디자인은 쉽지 않습니다.
+
+biggest companies in the tech industry are paying top salaries to engineers who
+그리고 기술 산업에서 가장 큰 회사들이 엔지니어들에게 고연봉을 지급하는것이 결코 우연은 아닙니다.
+
+can build and architects such scalable systems 
+(확장 가능한 시스템을 구성하고 설계 가능한 인력)
+
+on the flip side distributed systems is one of the most exciting topics in computer science 
+반면 분산 시스템은 컴퓨터 사이언스에서 가장 흥미로운 토픽중 하나입니다.
+
+so in the next lecture we will learn about the first tool to overcome those challenges
+그러니 다음 강의에서 우리는 이런 과제를 해결하기 위한 첫번째 도구에 대해 알아볼 것입니다.
+
+and start designing our first distributed algorithm see
+그리고 우리가 알아본 알고리즘에 대해서도 설계해보도록 합시다.
